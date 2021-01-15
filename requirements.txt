@@ -1,0 +1,5 @@
+# TODO set specific versions
+PyYAML
+jsonschema
+docker
+requests

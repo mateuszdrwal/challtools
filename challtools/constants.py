@@ -1,0 +1,10 @@
+CRITICAL = "\033[1;31m"
+HIGH = "\033[1;33m"
+MEDIUM = "\033[1;36m"
+LOW = "\033[1;34m"
+INFO = "\033[1;37m"
+CLEAR = "\033[0m"
+BOLD = "\033[1m"
+SUCCESS = "\033[1;32m"
+LEVEL_NAMES = ["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"]
+STYLED_LEVELS = [globals()[level] + level + CLEAR for level in LEVEL_NAMES]

@@ -1,0 +1,11 @@
+# specification messages
+A001:
+  name: Outdated validator
+  level: 5
+  formatted_message: This version of the validator only works for spec versions below {validator_spec_version}, while the challenge is designed using version {challenge_spec_version}. Please update the validator.
+  docs_message: The validator is trying to validate a challenge designed for a newer version of the spec than itself. Update the validator to fix this issue.
+A002:
+  name: Schema violation
+  level: 5
+  formatted_message: "The challenge schema has been violated: {message}"
+  docs_message: The challenge schema has been violated in some way.

@@ -1,0 +1,440 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "required": [
+        "title",
+        "description",
+        "authors",
+        "categories",
+        "flag_format_prefix",
+        "flags",
+        "spec"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "title": {
+            "type": "string"
+        },
+        "description": {
+            "type": "string"
+        },
+        "authors": {
+            "type": [
+                "string",
+                "array"
+            ],
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+                "type": "string"
+            }
+        },
+        "categories": {
+            "type": [
+                "string",
+                "array"
+            ],
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+                "type": "string"
+            }
+        },
+        "tags": {
+            "type": [
+                "string",
+                "array"
+            ],
+            "default": [],
+            "uniqueItems": true,
+            "items": {
+                "type": "string"
+            }
+        },
+        "hints": {
+            "type": [
+                "array"
+            ],
+            "default": [],
+            "uniqueItems": true,
+            "items": {
+                "type": "object",
+                "required": [
+                    "content"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "cost": {
+                        "type": "number",
+                        "default": 0
+                    },
+                    "content": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "flag_format_prefix": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "flag_format_suffix": {
+            "type": "string",
+            "default": "}"
+        },
+        "flags": {
+            "type": [
+                "array",
+                "string"
+            ],
+            "uniqueItems": true,
+            "items": {
+                "type": "object",
+                "required": [
+                    "flag"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "flag": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "text",
+                            "regex"
+                        ],
+                        "default": "text"
+                    }
+                }
+            }
+        },
+        "max_attempts": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null,
+            "minimum": 0
+        },
+        "score": {
+            "type": [
+                "number",
+                "null"
+            ],
+            "default": null
+        },
+        "downloadable_files": {
+            "type": [
+                "string",
+                "array"
+            ],
+            "default": [],
+            "uniqueItems": true,
+            "items": {
+                "type": "string"
+            }
+        },
+        "custom_service_types": {
+            "type": [
+                "array"
+            ],
+            "default": [],
+            "uniqueItems": true,
+            "items": {
+                "type": "object",
+                "required": [
+                    "type",
+                    "display"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "not": {
+                            "enum": [
+                                "website",
+                                "tcp"
+                            ]
+                        }
+                    },
+                    "display": {
+                        "type": "string"
+                    },
+                    "hyperlink": {
+                        "type": "boolean",
+                        "default": false
+                    }
+                }
+            }
+        },
+        "predefined_services": {
+            "type": [
+                "array"
+            ],
+            "default": [],
+            "uniqueItems": true,
+            "items": {
+                "type": "object",
+                "required": [
+                    "type"
+                ],
+                "properties": {
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                "allOf": [
+                    {
+                        "if": {
+                            "properties": {
+                                "type": {
+                                    "const": "website"
+                                }
+                            }
+                        },
+                        "then": {
+                            "required": [
+                                "url"
+                            ],
+                            "additionalProperties": false,
+                            "properties": {
+                                "type": {},
+                                "url": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "if": {
+                            "properties": {
+                                "type": {
+                                    "const": "tcp"
+                                }
+                            }
+                        },
+                        "then": {
+                            "required": [
+                                "host",
+                                "port"
+                            ],
+                            "additionalProperties": false,
+                            "properties": {
+                                "type": {},
+                                "host": {
+                                    "type": "string"
+                                },
+                                "port": {
+                                    "type": [
+                                        "string",
+                                        "integer"
+                                    ],
+                                    "minimum": 0
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "service": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "required": [
+                "image",
+                "type",
+                "internal_port"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "internal_port": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "external_port": {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
+        "deployment": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "required": [
+                "type",
+                "containers"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "const": "docker"
+                },
+                "containers": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "required": [
+                            "image"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                            "image": {
+                                "type": "string"
+                            },
+                            "services": {
+                                "type": [
+                                    "array"
+                                ],
+                                "default": [],
+                                "items": {
+                                    "type": "object",
+                                    "required": [
+                                        "type",
+                                        "internal_port",
+                                        "external_port"
+                                    ],
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "internal_port": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        },
+                                        "external_port": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        }
+                                    }
+                                }
+                            },
+                            "extra_exposed_ports": {
+                                "type": [
+                                    "array"
+                                ],
+                                "default": [],
+                                "items": {
+                                    "type": "object",
+                                    "required": [
+                                        "internal_port",
+                                        "external_port"
+                                    ],
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "internal_port": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        },
+                                        "external_port": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "networks": {
+                    "type": [
+                        "object"
+                    ],
+                    "default": {},
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "volumes": {
+                    "type": [
+                        "object"
+                    ],
+                    "default": {},
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "minProperties": 1,
+                            "maxProperties": 1
+                        }
+                    }
+                }
+            }
+        },
+        "solution_image": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "unlocked_by": {
+            "type": [
+                "string",
+                "array"
+            ],
+            "default": [],
+            "uniqueItems": true,
+            "items": {
+                "type": "string"
+            }
+        },
+        "all_unlocked_by_required": {
+            "type": [
+                "boolean"
+            ],
+            "default": false
+        },
+        "release_delay": {
+            "type": [
+                "number"
+            ],
+            "default": 0,
+            "minimum": 0
+        },
+        "human_metadata": {
+            "type": "object",
+            "default": {},
+            "additionalItems": false,
+            "properties": {
+                "challenge_version": {
+                    "type": "string"
+                },
+                "event_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "challenge_id": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "custom": {
+            "type": "object",
+            "default": {}
+        },
+        "spec": {
+            "type": "string",
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        }
+    }
+}
