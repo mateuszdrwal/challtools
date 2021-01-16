@@ -22,4 +22,10 @@ setuptools.setup(
     ],
     python_requires=">=3.6",
     entry_points={"console_scripts": ["challtools = challtools.cli:main"]},
+    install_requires=[
+        "PyYAML",
+        "jsonschema",
+        "docker",
+        "requests",
+    ],
 )
