@@ -150,9 +150,9 @@ def solve(args):  # TODO add support for solve script
         print(f"{BOLD}Aborting...{CLEAR}")
         for container in containers:
             container.kill()
-            return 1
         solution_container.kill()
         solution_container.remove()
+        return 1
 
     solution_container.wait()
 
