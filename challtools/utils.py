@@ -319,12 +319,12 @@ def build_chall(config):
 
         client = get_docker_client_or_exit()
 
-    if config["custom"]["build_script"] or config["deployment"]:
+    if "build_script" in config["custom"] or config["deployment"]:
         flag = get_first_text_flag(config)
         if flag:
             print(f"{BOLD}Flag: {flag}{CLEAR}")
 
-    if config["custom"]["build_script"]:
+    if "build_script" in config["custom"]:
         print(f"{BOLD}Running build script...{CLEAR}")
 
         did_something = True
