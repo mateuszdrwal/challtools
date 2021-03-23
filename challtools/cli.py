@@ -4,6 +4,7 @@ import argparse
 from .validator import ConfigValidator
 from .utils import (
     process_messages,
+    load_ctf_config,
     load_config_or_exit,
     get_valid_config_or_exit,
     build_chall,
@@ -59,7 +60,7 @@ def validate(args):
 
     config = load_config_or_exit()
 
-    validator = ConfigValidator(config)
+    validator = ConfigValidator(config, load_ctf_config())
     messages = validator.validate()[1]
 
     processed = process_messages(messages, verbose=args.v)

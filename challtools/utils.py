@@ -69,11 +69,48 @@ def process_messages(messages, verbose=False):
     }
 
 
+def get_ctf_config_path():
+    """Locates the global CTF configuration file (ctf.yaml) and returns a path to it.
+
+    Returns:
+        pathlib.Path: The path to the config
+        None: If there was no CTF config
+    """
+    p = Path(".").absolute()
+
+    for directory in [p, *p.parents]:
+        if (directory / "ctf.yml").exists():
+            return directory / "ctf.yml"
+        if (directory / "ctf.yaml").exists():
+            return directory / "ctf.yaml"
+
+    return None
+
+
+def load_ctf_config():
+    """Loads the global CTF configuration file (ctf.yaml) from the current or a parent directory.
+
+    Returns:
+        dict: The config
+        None: If there was no CTF config
+    """
+    ctfpath = get_ctf_config_path()
+
+    if not ctfpath:
+        return None
+
+    with ctfpath.open() as f:
+        raw_config = f.read()
+    config = yaml.safe_load(raw_config)
+
+    return config if config else {}
+
+
 def load_config_or_exit():
     """Loads the challenge configuration file from the current directory, or prints a message and exits the script if it doesn't exist.
 
     Returns:
-        dict: The normalized config
+        dict: The config
     """
     files = os.listdir(".")
     if "challenge.yml" not in files and "challenge.yaml" not in files:

@@ -9,3 +9,20 @@ A002:
   level: 5
   formatted_message: "The challenge schema has been violated: {message}"
   docs_message: The challenge schema has been violated in some way.
+
+# challtools messages
+B001:
+  name: No CTF config
+  level: 2
+  formatted_message: No CTF configuration file (ctf.yaml) detected in the current directory or any parent directory.
+  docs_message: No CTF configuration file (ctf.yaml) detected in the current directory or any parent directory.
+B002:
+  name: Invalid category
+  level: 4
+  formatted_message: "The following category doesn't exist in the CTF configuration file (ctf.yaml): {category}. Make sure your spelling is correct, and if so add the missing category to the config file."
+  docs_message: A category not present in the CTF configuration file (ctf.yaml) was found. Make sure your spelling is correct, and if so add the missing category to the config file.
+B003:
+  name: Invalid author
+  level: 4
+  formatted_message: "The following author doesn't exist in the CTF configuration file (ctf.yaml): {author}. Make sure your spelling is correct, and if so add the missing author to the config file."
+  docs_message: A author not present in the CTF configuration file (ctf.yaml) was found. Make sure your spelling is correct, and if so add the missing author to the config file.

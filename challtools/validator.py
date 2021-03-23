@@ -44,10 +44,11 @@ class ConfigValidator:
     config = {}
     normalized_config = {}
 
-    def __init__(self, config):
+    def __init__(self, config, ctf_config=None):
         if not isinstance(config, dict):
             raise ValueError("Config parameter needs to be a dict")
         self.config = config
+        self.ctf_config = ctf_config
 
     # def normalize_challenge(self):
     #     """Returns a version of the challenge config where all defaults have been substituted in and fields expecting an array are formatted with an array, even if only one element without the array was provided.
@@ -144,12 +145,29 @@ class ConfigValidator:
             self.normalized_config["service"] = None
         # normalization done
 
+        ### CTF config validation
+        # if no ctf config was provided to the validator we assume it does not exist and issue B001. not ideal as there might be other reasons for why the ctf config is not provided, but works for now
+        if self.ctf_config == None:
+            self._raise_code("B001")
+        else:
+            # validate correct challenge names
+            if "categories" in self.ctf_config:
+                for category in self.normalized_config["categories"]:
+                    if category not in self.ctf_config["categories"]:
+                        self._raise_code("B002", "categories", category=category)
+
+            # validate correct author names
+            if "authors" in self.ctf_config:
+                for author in self.normalized_config["authors"]:
+                    if author not in self.ctf_config["authors"]:
+                        self._raise_code("B003", "authors", author=author)
+
         # pprint(self.config)
         # pprint(self.normalized_config)
 
         return True, self.messages
 
-    def _raise_code(self, code, field, **formatting):
+    def _raise_code(self, code, field=None, **formatting):
         """Adds a formatted message entry into the messages array.
 
         Args:
