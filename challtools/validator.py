@@ -39,14 +39,12 @@ DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
 
 
 class ConfigValidator:
-
-    messages = []
-    config = {}
-    normalized_config = {}
-
     def __init__(self, config, ctf_config=None):
         if not isinstance(config, dict):
             raise ValueError("Config parameter needs to be a dict")
+        self.messages = []
+        self.config = {}
+        self.normalized_config = {}
         self.config = config
         self.ctf_config = ctf_config
 

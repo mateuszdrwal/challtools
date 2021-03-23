@@ -106,18 +106,22 @@ def load_ctf_config():
     return config if config else {}
 
 
-def load_config_or_exit():
+def load_config_or_exit(workdir="."):
     """Loads the challenge configuration file from the current directory, or prints a message and exits the script if it doesn't exist.
 
     Returns:
         dict: The config
     """
-    files = os.listdir(".")
-    if "challenge.yml" not in files and "challenge.yaml" not in files:
+    path = Path(workdir)
+    if (path / "challenge.yml").exists():
+        path = path / "challenge.yml"
+    elif (path / "challenge.yaml").exists():
+        path = path / "challenge.yaml"
+    else:
         print(f"{CRITICAL}Could not find a challenge.yml file in this directory.")
         exit(1)
 
-    with open("challenge.yml" if "challenge.yml" in files else "challenge.yaml") as f:
+    with path.open() as f:
         raw_config = f.read()
     config = yaml.safe_load(raw_config)
 
@@ -161,6 +165,31 @@ def get_valid_config_or_exit():
         )
 
     return validator.normalized_config
+
+
+def discover_challenges():
+    """Discovers all challenges at the same level as or in a subdirectory below the CTF configuration file.
+
+    Returns:
+        list: A list of pathlib.Path objects to all found challenge configurations
+        None: If there was no CTF config
+    """
+    root = get_ctf_config_path().parent
+
+    if not root:
+        return None
+
+    def checkdir(d):
+        if (d / "challenge.yml").exists():
+            return [d / "challenge.yml"]
+        if (d / "challenge.yaml").exists():
+            return [d / "challenge.yaml"]
+        results = []
+        for subd in [f for f in d.iterdir() if f.is_dir()]:
+            results += checkdir(subd)
+        return results
+
+    return checkdir(root)
 
 
 def get_docker_client_or_exit():

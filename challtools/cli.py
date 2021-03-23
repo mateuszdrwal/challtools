@@ -6,7 +6,9 @@ from .utils import (
     process_messages,
     load_ctf_config,
     load_config_or_exit,
+    get_ctf_config_path,
     get_valid_config_or_exit,
+    discover_challenges,
     build_chall,
     start_chall,
     start_solution,
@@ -29,6 +31,13 @@ def main():
     )
     validate_parser.add_argument("-v", action="store_true")
     validate_parser.set_defaults(func=validate)
+
+    validate_all_parser = subparsers.add_parser(
+        "validate_all",
+        description="Validates all challenges in the CTF to make sure they are defined properly",
+    )
+    validate_all_parser.add_argument("-v", action="store_true")
+    validate_all_parser.set_defaults(func=validate_all)
 
     build_parser = subparsers.add_parser(
         "build",
@@ -170,3 +179,29 @@ def solve(args):  # TODO add support for solve script
         return 1
 
     return 0
+
+
+def validate_all(args):
+
+    if get_ctf_config_path() == None:
+        print(
+            f"{CRITICAL}No CTF configuration file (ctf.yaml) detected in the current directory or any parent directory, and therefore cannot discover challenges.{CLEAR}"
+        )
+        return 1
+
+    ctf_config = load_ctf_config()
+
+    for path in discover_challenges():
+        print(f"{BOLD}Validating {path}{CLEAR}")
+
+        path = path.parent
+
+        config = load_config_or_exit(workdir=path)
+
+        validator = ConfigValidator(config, ctf_config)
+        messages = validator.validate()[1]
+
+        processed = process_messages(messages, verbose=args.v)
+
+        if processed["highest_level"]:
+            print("\n".join(processed["message_strings"]))
