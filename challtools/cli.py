@@ -29,14 +29,14 @@ def main():
         "validate",
         description="Validates a challenge to make sure it's defined properly",
     )
-    validate_parser.add_argument("-v", action="store_true")
+    validate_parser.add_argument("-v", "--verbose", action="store_true")
     validate_parser.set_defaults(func=validate)
 
     validate_all_parser = subparsers.add_parser(
         "validate_all",
         description="Validates all challenges in the CTF to make sure they are defined properly",
     )
-    validate_all_parser.add_argument("-v", action="store_true")
+    validate_all_parser.add_argument("-v", "--verbose", action="store_true")
     validate_all_parser.set_defaults(func=validate_all)
 
     build_parser = subparsers.add_parser(
@@ -49,6 +49,7 @@ def main():
         "start",
         description="Starts a challenge by running its docker images",
     )
+    start_parser.add_argument("-b", "--build", action="store_true")
     start_parser.set_defaults(func=start)
 
     solve_parser = subparsers.add_parser(
@@ -72,12 +73,12 @@ def validate(args):
     validator = ConfigValidator(config, load_ctf_config())
     messages = validator.validate()[1]
 
-    processed = process_messages(messages, verbose=args.v)
+    processed = process_messages(messages, verbose=args.verbose)
 
     if processed["highest_level"]:
         print("\n".join(processed["message_strings"]))
     print(processed["count_string"])
-    if processed["highest_level"] and not args.v:
+    if processed["highest_level"] and not args.verbose:
         print("Run with -v for detailed descriptions")
 
     level_messages = [
@@ -109,6 +110,9 @@ def build(args):
 
 def start(args):
     config = get_valid_config_or_exit()
+
+    if args.build and build_chall(config):
+        print(f"{SUCCESS}Challenge built successfully!{CLEAR}")
 
     containers, service_strings = start_chall(config)
 
@@ -201,7 +205,7 @@ def validate_all(args):
         validator = ConfigValidator(config, ctf_config)
         messages = validator.validate()[1]
 
-        processed = process_messages(messages, verbose=args.v)
+        processed = process_messages(messages, verbose=args.verbose)
 
         if processed["highest_level"]:
             print("\n".join(processed["message_strings"]))
