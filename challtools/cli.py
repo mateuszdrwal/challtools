@@ -1,6 +1,7 @@
 import sys
 import time
 import argparse
+from pathlib import Path
 from .validator import ConfigValidator
 from .utils import (
     process_messages,
@@ -70,7 +71,9 @@ def validate(args):
 
     config = load_config_or_exit()
 
-    validator = ConfigValidator(config, load_ctf_config())
+    validator = ConfigValidator(
+        config, ctf_config=load_ctf_config(), challdir=Path(".")
+    )
     messages = validator.validate()[1]
 
     processed = process_messages(messages, verbose=args.verbose)
@@ -202,7 +205,7 @@ def validate_all(args):
 
         config = load_config_or_exit(workdir=path)
 
-        validator = ConfigValidator(config, ctf_config)
+        validator = ConfigValidator(config, ctf_config=ctf_config, challdir=path)
         messages = validator.validate()[1]
 
         processed = process_messages(messages, verbose=args.verbose)

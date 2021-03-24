@@ -9,6 +9,11 @@ A002:
   level: 5
   formatted_message: "The challenge schema has been violated: {message}"
   docs_message: The challenge schema has been violated in some way.
+A003:
+  name: Downloadable file missing
+  level: 4
+  formatted_message: "The file {file} is configured as a downloadable file however it does not exist on the filesystem."
+  docs_message: A file configured as a downloadable file does not exist on the filesystem.
 
 # challtools messages
 B001:
