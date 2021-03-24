@@ -2,6 +2,7 @@ import sys
 import time
 import argparse
 from pathlib import Path
+import yaml
 from .validator import ConfigValidator
 from .utils import (
     process_messages,
@@ -58,6 +59,12 @@ def main():
         description="Starts a challenge by running its docker images, and procedes to solve it using the solution container",
     )
     solve_parser.set_defaults(func=solve)
+
+    create_compose_parser = subparsers.add_parser(
+        "create_compose",
+        description="Writes a docker-compose.yml file to the challenge directory which can be used to run all challenge services",
+    )
+    create_compose_parser.set_defaults(func=create_compose)
 
     args = parser.parse_args()
 
@@ -212,3 +219,84 @@ def validate_all(args):
 
         if processed["highest_level"]:
             print("\n".join(processed["message_strings"]))
+
+
+def create_compose(args):
+    config = get_valid_config_or_exit()
+
+    if config["deployment"]["type"] != "docker":
+        print(
+            f'{CRITICAL}Only deployments of type "docker" can be used to create a docker-compose file{CLEAR}'
+        )
+        return 1
+
+    if not config["deployment"]["containers"]:
+        print(f"{BOLD}No services defined, nothing to do{CLEAR}")
+        return 0
+
+    compose = {
+        "version": "3",
+        "services": {},
+    }
+
+    if config["deployment"]["volumes"]:
+        compose["volumes"] = {volume: {} for volume in config["deployment"]["volumes"]}
+    if config["deployment"]["networks"]:
+        compose["networks"] = {
+            network: {} for network in config["deployment"]["networks"]
+        }
+
+    next_port = 50000
+    used_ports = set()
+
+    # TODO handle services with set external ports first so the auto assigned ports dont potentially conflict with them
+    for name, container in config["deployment"]["containers"].items():
+        compose_service = {"ports": []}
+        volumes = []
+        networks = []
+
+        if Path(container["image"]).exists():
+            compose_service["build"] = container["image"]
+        else:
+            compose_service["image"] = container["image"]
+
+        for service in container["services"]:
+            external_port = service.get("external_port")
+            if not external_port:
+                while next_port in used_ports:
+                    next_port += 1
+                external_port = next_port
+
+            assert external_port not in used_ports
+            used_ports.add(external_port)
+
+            compose_service["ports"].append(
+                f"{external_port}:{service['internal_port']}"
+            )
+
+        for service in container["extra_exposed_ports"]:
+            assert service["external_port"] not in used_ports
+            used_ports.add(service["external_port"])
+            compose_service["ports"].append(
+                f"{service['external_port']}:{service['internal_port']}"
+            )
+
+        for volume_name, containers in config["deployment"]["volumes"].items():
+            for mapping in containers:
+                if name in mapping:
+                    volumes.append(f"{volume_name}:{mapping[name]}")
+
+        for network_name, containers in config["deployment"]["networks"].items():
+            if name in containers:
+                networks.append(network_name)
+
+        if volumes:
+            compose_service["volumes"] = volumes
+        if networks:
+            compose_service["networks"] = networks
+
+        compose["services"][name] = compose_service
+
+    Path("docker-compose.yml").write_text(yaml.dump(compose))
+
+    print(f"{SUCCESS}docker-compose.yml written!{CLEAR}")

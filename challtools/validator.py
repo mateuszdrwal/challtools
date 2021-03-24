@@ -130,6 +130,7 @@ class ConfigValidator:
                                 ],
                             }
                         ],
+                        "extra_exposed_ports": [],
                     },
                 },
                 "networks": {},
