@@ -3,3 +3,4 @@ PyYAML
 jsonschema
 docker
 requests
+google-cloud-storage

@@ -152,7 +152,7 @@ def get_valid_config_or_exit():
             f"\n{CRITICAL}There are critical config validation errors. Please fix them before continuing."
         )
         exit(1)
-    elif highest_level == 5:
+    elif highest_level == 4:
         print(
             "\n".join(
                 process_messages([m for m in messages if m["level"] == 4])[
