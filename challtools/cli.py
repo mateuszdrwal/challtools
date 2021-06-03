@@ -49,13 +49,6 @@ def main():
     validate_parser.add_argument("-v", "--verbose", action="store_true")
     validate_parser.set_defaults(func=validate)
 
-    validate_all_parser = subparsers.add_parser(
-        "validate_all",
-        description="Validates all challenges in the CTF to make sure they are defined properly",
-    )
-    validate_all_parser.add_argument("-v", "--verbose", action="store_true")
-    validate_all_parser.set_defaults(func=validate_all)
-
     build_parser = subparsers.add_parser(
         "build",
         description="Builds a challenge by running its build script and building docker images",
