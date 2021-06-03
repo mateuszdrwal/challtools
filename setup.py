@@ -27,5 +27,6 @@ setuptools.setup(
         "jsonschema",
         "docker",
         "requests",
+        "google-cloud-storage",
     ],
 )
