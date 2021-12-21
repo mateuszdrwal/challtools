@@ -47,6 +47,13 @@ def main():
         description="Validates a challenge to make sure it's defined properly",
     )
     validate_parser.add_argument("-v", "--verbose", action="store_true")
+    validate_parser.add_argument(
+        "-e",
+        "--error-level",
+        type=int,
+        default=5,
+        help="If a validation message with this level or above is raised, the command exits with exit code 1",
+    )
     validate_parser.set_defaults(func=validate)
 
     build_parser = subparsers.add_parser(
@@ -145,17 +152,34 @@ def validate(args):
     if processed["highest_level"] and not args.verbose:
         print("Run with -v for detailed descriptions")
 
+    status = "failed" if processed["highest_level"] >= args.error_level else "succeeded"
+    level_intro_colors = [
+        SUCCESS,
+        SUCCESS,
+        SUCCESS,
+        HIGH,
+        HIGH,
+        CRITICAL,
+    ]
+    color = level_intro_colors[processed["highest_level"]]
+    if processed["highest_level"] >= args.error_level:
+        color = CRITICAL
+
     level_messages = [
-        f"{SUCCESS}Validation succeeded. No issues detected!",
-        f"{SUCCESS}Validation succeeded.",
-        f"{SUCCESS}Validation succeeded.",
-        f"{HIGH}Validation succeeded. You may want to investigate some of the issues.",
-        f"{HIGH}Validation succeeded, however you should fix errors of high severity.",
-        f"{CRITICAL}Validation failed, please fix the critical errors.",
+        "No issues detected!",
+        "",
+        "",
+        "You may want to investigate some of the issues.",
+        "You should fix errors of high severity.",
+        "Please fix the critical errors.",
     ]
 
-    print(level_messages[processed["highest_level"]] + CLEAR)
-    if processed["highest_level"] == 5:
+    print(
+        f"{color}Validation {status}. "
+        + level_messages[processed["highest_level"]]
+        + CLEAR
+    )
+    if processed["highest_level"] >= args.error_level:
         return 1
 
     return 0
