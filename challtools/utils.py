@@ -70,7 +70,7 @@ def process_messages(messages, verbose=False):
 
 
 def get_ctf_config_path():
-    """Locates the global CTF configuration file (ctf.yaml) and returns a path to it.
+    """Locates the global CTF configuration file (ctf.yml) and returns a path to it.
 
     Returns:
         pathlib.Path: The path to the config
@@ -88,7 +88,7 @@ def get_ctf_config_path():
 
 
 def load_ctf_config():
-    """Loads the global CTF configuration file (ctf.yaml) from the current or a parent directory.
+    """Loads the global CTF configuration file (ctf.yml) from the current or a parent directory.
 
     Returns:
         dict: The config

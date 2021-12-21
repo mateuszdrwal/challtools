@@ -112,7 +112,7 @@ def allchalls(args):
 
     if get_ctf_config_path() == None:
         print(
-            f"{CRITICAL}No CTF configuration file (ctf.yaml) detected in the current directory or any parent directory, and therefore cannot discover challenges.{CLEAR}"
+            f"{CRITICAL}No CTF configuration file (ctf.yml) detected in the current directory or any parent directory, and therefore cannot discover challenges.{CLEAR}"
         )
         return 1
 
