@@ -145,10 +145,15 @@ class ConfigValidator:
             self.normalized_config["service"] = None
         # normalization done
 
+        # A003
         if self.challdir:
             for file in self.normalized_config["downloadable_files"]:
                 if not (self.challdir / Path(file)).exists():
                     self._raise_code("A003", "downloadable_files", file=file)
+
+        # A004
+        if not self.normalized_config["challenge_id"]:
+            self._raise_code("A004", "challenge_id")
 
         ### CTF config validation
         # if no ctf config was provided to the validator we assume it does not exist and issue B001. not ideal as there might be other reasons for why the ctf config is not provided, but works for now
@@ -178,9 +183,6 @@ class ConfigValidator:
                     "flag_format_prefix",
                     prefix=self.normalized_config["flag_format_prefix"],
                 )
-
-        # pprint(self.config)
-        # pprint(self.normalized_config)
 
         return True, self.messages
 

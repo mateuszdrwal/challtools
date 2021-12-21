@@ -14,6 +14,11 @@ A003:
   level: 4
   formatted_message: "The file {file} is configured as a downloadable file however it does not exist on the filesystem."
   docs_message: A file configured as a downloadable file does not exist on the filesystem.
+A004:
+  name: Challenge ID missing
+  level: 3
+  formatted_message: 'This challenge is missing a challenge ID, which is recommended and required by some systems. Generate one using "challtools ensureid" or add a "challenge_id" to the challenge configuration manually.'
+  docs_message: The challenge is missing a challenge ID which is generally recommended and may be required by some systems. Generate one using "challtools ensureid" or add a "challenge_id" to the challenge configuration manually.
 
 # challtools messages
 B001:
