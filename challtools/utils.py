@@ -3,6 +3,7 @@ import re
 import subprocess
 import sys
 import hashlib
+import json
 from pathlib import Path
 import yaml
 import docker
@@ -349,12 +350,26 @@ def build_image(image, tag, client):
         print(
             f'{BOLD}Interpreting "{image}" as an image build directory\nBuilding image...{CLEAR}'
         )
-        client.images.build(
-            path=str(imagepath),
-            tag=tag,
-            rm=True,
-        )  # TODO handle docker.errors.BuildError
-        # TODO build progress
+        try:
+            stream = client.api.build(
+                path=str(imagepath),
+                tag=tag,
+                rm=True,
+            )
+
+            for chunk in stream:
+                decoded = json.loads(chunk)
+                # TODO process progress bars for pulling
+                if "error" in decoded:
+                    print(CRITICAL + decoded["error"])
+                    exit(1)
+                if "stream" in decoded:
+                    print(decoded["stream"], end="")
+
+        except docker.errors.APIError as e:
+            print(CRITICAL + e.explanation)
+            exit(1)
+
     elif imagepath.is_file():
         print(f'{BOLD}Interpreting "{image}" as an image archive{CLEAR}')
         print(f"{BOLD}Importing image...{CLEAR}")
