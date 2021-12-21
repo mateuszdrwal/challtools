@@ -24,10 +24,15 @@ B001:
 B002:
   name: Invalid category
   level: 4
-  formatted_message: "The following category doesn't exist in the CTF configuration file (ctf.yml): {category}. Make sure your spelling is correct, and if so add the missing category to the config file."
-  docs_message: A category not present in the CTF configuration file (ctf.yml) was found. Make sure your spelling is correct, and if so add the missing category to the config file.
+  formatted_message: "The following category doesn't exist in the CTF configuration file (ctf.yml): {category}. Make sure your spelling is correct, and if so add the missing category to the configuration file."
+  docs_message: A category not present in the CTF configuration file (ctf.yml) was found. Make sure your spelling is correct, and if so add the missing category to the configuration file.
 B003:
   name: Invalid author
   level: 4
-  formatted_message: "The following author doesn't exist in the CTF configuration file (ctf.yml): {author}. Make sure your spelling is correct, and if so add the missing author to the config file."
-  docs_message: A author not present in the CTF configuration file (ctf.yml) was found. Make sure your spelling is correct, and if so add the missing author to the config file.
+  formatted_message: "The following author doesn't exist in the CTF configuration file (ctf.yml): {author}. Make sure your spelling is correct, and if so add the missing author to the configuration file."
+  docs_message: An author not present in the CTF configuration file (ctf.yml) was found. Make sure your spelling is correct, and if so add the missing author to the configuration file.
+B004:
+  name: Invalid flag format prefix
+  level: 4
+  formatted_message: 'The following flag format prefix doesn''t exist in the CTF configuration file (ctf.yml): "{prefix}". Make sure your spelling and capitalization is correct.'
+  docs_message: A flag format prefix not present in the CTF configuration file (ctf.yml) was found. Make sure your spelling is correct, and if so add the missing flag format prefix to the configuration file.

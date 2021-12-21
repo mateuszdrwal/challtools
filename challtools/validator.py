@@ -155,17 +155,29 @@ class ConfigValidator:
         if self.ctf_config == None:
             self._raise_code("B001")
         else:
-            # validate correct challenge names
+            # B002 validate correct challenge names
             if "categories" in self.ctf_config:
                 for category in self.normalized_config["categories"]:
                     if category not in self.ctf_config["categories"]:
                         self._raise_code("B002", "categories", category=category)
 
-            # validate correct author names
+            # B003 validate correct author names
             if "authors" in self.ctf_config:
                 for author in self.normalized_config["authors"]:
                     if author not in self.ctf_config["authors"]:
                         self._raise_code("B003", "authors", author=author)
+
+            # B004 validate correct flag format prefix
+            if (
+                "flag_format_prefixes" in self.ctf_config
+                and self.normalized_config["flag_format_prefix"]
+                not in self.ctf_config["flag_format_prefixes"]
+            ):
+                self._raise_code(
+                    "B004",
+                    "flag_format_prefix",
+                    prefix=self.normalized_config["flag_format_prefix"],
+                )
 
         # pprint(self.config)
         # pprint(self.normalized_config)
