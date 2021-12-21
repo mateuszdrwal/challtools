@@ -4,11 +4,11 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="challtools",  # Replace with your own username
+    name="challtools",
     version="0.0.1",
     author="Mateusz Drwal",
-    author_email="drwal.mateusz@gmail.com",
-    description="A small example package",
+    author_email="me@mateuszdrwal.com",
+    description="A tool for managing CTF challenges and challenge repositories using the OpenChallSpec",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/mateuszdrwal/challtools",
