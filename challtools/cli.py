@@ -11,11 +11,12 @@ from google.cloud import storage
 
 from .validator import ConfigValidator
 from .utils import (
+    CriticalException,
     process_messages,
     load_ctf_config,
-    load_config_or_exit,
+    load_config,
     get_ctf_config_path,
-    get_valid_config_or_exit,
+    get_valid_config,
     discover_challenges,
     build_chall,
     start_chall,
@@ -98,7 +99,11 @@ def main():
     if not getattr(args, "func", None):
         parser.print_usage()
     else:
-        exit(args.func(args))
+        try:
+            exit(args.func(args))
+        except CriticalException as e:
+            print(CRITICAL + e.args[0])
+            exit(1)
 
 
 def allchalls(args):
@@ -124,8 +129,9 @@ def allchalls(args):
 
         try:
             exit_code = parser_args.func(parser_args)
-        except SystemExit as e:
-            exit_code = e.code or 0
+        except CriticalException as e:
+            print(CRITICAL + e.args[0])
+            exit_code = 1
 
         if exit_code:
             failed = True
@@ -137,7 +143,7 @@ def allchalls(args):
 
 def validate(args):
 
-    config = load_config_or_exit()
+    config = load_config()
 
     validator = ConfigValidator(
         config, ctf_config=load_ctf_config(), challdir=Path(".")
@@ -186,7 +192,7 @@ def validate(args):
 
 
 def build(args):
-    config = get_valid_config_or_exit()
+    config = get_valid_config()
 
     if build_chall(config):
         print(f"{SUCCESS}Challenge built successfully!{CLEAR}")
@@ -197,7 +203,7 @@ def build(args):
 
 
 def start(args):
-    config = get_valid_config_or_exit()
+    config = get_valid_config()
 
     if args.build and build_chall(config):
         print(f"{SUCCESS}Challenge built successfully!{CLEAR}")
@@ -225,7 +231,7 @@ def start(args):
 
 
 def solve(args):  # TODO add support for solve script
-    config = get_valid_config_or_exit()
+    config = get_valid_config()
 
     # if not config["solution_image"]:
     #     print(f"{BOLD}No solution defined, cannot solve challenge{CLEAR}")
@@ -274,7 +280,7 @@ def solve(args):  # TODO add support for solve script
 
 
 def compose(args):
-    config = get_valid_config_or_exit()
+    config = get_valid_config()
 
     if not config["deployment"] or not config["deployment"].get("containers"):
         print(f"{BOLD}No services defined, nothing to do{CLEAR}")
@@ -424,7 +430,7 @@ def ensureid(args):
 
 
 def push(args):
-    config = get_valid_config_or_exit()
+    config = get_valid_config()
     ctf_config = load_ctf_config()
 
     if not config["challenge_id"]:

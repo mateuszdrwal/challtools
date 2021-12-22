@@ -12,6 +12,10 @@ from .validator import ConfigValidator
 from .constants import *
 
 
+class CriticalException(Exception):
+    pass
+
+
 def process_messages(messages, verbose=False):
     """Processes a list of messages from validator.ConfigValidator.validate for printing.
 
@@ -107,11 +111,14 @@ def load_ctf_config():
     return config if config else {}
 
 
-def load_config_or_exit(workdir="."):
-    """Loads the challenge configuration file from the current directory, or prints a message and exits the script if it doesn't exist.
+def load_config(workdir="."):
+    """Loads the challenge configuration file from the current or a specified directory.
 
     Returns:
         dict: The config
+
+    Raises:
+        CriticalException: If the challenge configuration cannot be found
     """
     path = Path(workdir)
     if (path / "challenge.yml").exists():
@@ -119,8 +126,9 @@ def load_config_or_exit(workdir="."):
     elif (path / "challenge.yaml").exists():
         path = path / "challenge.yaml"
     else:
-        print(f"{CRITICAL}Could not find a challenge.yml file in this directory.")
-        exit(1)
+        raise CriticalException(
+            "Could not find a challenge.yml file in this directory."
+        )
 
     with path.open() as f:
         raw_config = f.read()
@@ -129,13 +137,16 @@ def load_config_or_exit(workdir="."):
     return config
 
 
-def get_valid_config_or_exit():
-    """Loads the challenge configuration file from the current directory and makes sure its valid, or prints a message and exits the script if it doesn't exist or is invalid.
+def get_valid_config():
+    """Loads the challenge configuration file from the current directory and makes sure its valid.
 
     Returns:
         dict: The normalized config
+
+    Raises:
+        CriticalException: If there are critical validation errors
     """
-    config = load_config_or_exit()
+    config = load_config()
 
     validator = ConfigValidator(config)
     messages = validator.validate()[1]
@@ -149,10 +160,10 @@ def get_valid_config_or_exit():
                 ]
             )
         )
-        print(
-            f"\n{CRITICAL}There are critical config validation errors. Please fix them before continuing."
+        print()
+        raise CriticalException(
+            "There are critical config validation errors. Please fix them before continuing."
         )
-        exit(1)
     elif highest_level == 4:
         print(
             "\n".join(
@@ -193,20 +204,22 @@ def discover_challenges():
     return checkdir(root)
 
 
-def get_docker_client_or_exit():
-    """Gets an authenticated docker client or exits and recommends to run the script with sudo if not possible.
+def get_docker_client():
+    """Gets an authenticated docker client.
 
     Returns:
         docker.client.DockerClient: The docker client
+
+    Raises:
+        CriticalException: If the client cannot be created
     """
     try:
         client = docker.from_env()
         client.images.list()
     except (requests.exceptions.ConnectionError, docker.errors.DockerException):
-        print(
-            f"{CRITICAL}challtools needs root permissions to run docker (run with sudo){CLEAR}"
+        raise CriticalException(
+            "challtools needs root permissions to run docker (run with sudo)"
         )
-        exit(1)
 
     return client
 
@@ -344,6 +357,9 @@ def build_image(image, tag, client):
         image (string): The image as a path to a folder to build or as a path to an archive to import. if neither, the function won't do anything
         tag (string): The tag name to tag the image as
         client (docker.client.DockerClient): The docker client to use for building
+
+    Raises:
+        CriticalException: If the build fails
     """
     imagepath = Path(image)
     if imagepath.is_dir():
@@ -361,14 +377,12 @@ def build_image(image, tag, client):
                 decoded = json.loads(chunk)
                 # TODO process progress bars for pulling
                 if "error" in decoded:
-                    print(CRITICAL + decoded["error"])
-                    exit(1)
+                    raise CriticalException(decoded["error"])
                 if "stream" in decoded:
                     print(decoded["stream"], end="")
 
         except docker.errors.APIError as e:
-            print(CRITICAL + e.explanation)
-            exit(1)
+            raise CriticalException(e.explanation)
 
     elif imagepath.is_file():
         print(f'{BOLD}Interpreting "{image}" as an image archive{CLEAR}')
@@ -388,17 +402,19 @@ def build_chall(config):
 
     Returns:
         bool: False if there was nothing to do, True if it ran the build script or built a container
+
+    Raises:
+        CriticalException: If the build fails
     """
     did_something = False
 
     if config["deployment"]:
         if config["deployment"]["type"] != "docker":
-            print(
-                f'{CRITICAL}challtools only supports the "docker" deployment type{CLEAR}'
+            raise CriticalException(
+                'challtools only supports the "docker" deployment type'
             )
-            exit(1)
 
-        client = get_docker_client_or_exit()
+        client = get_docker_client()
 
     if "build_script" in config["custom"] or config["deployment"]:
         flag = get_first_text_flag(config)
@@ -418,8 +434,7 @@ def build_chall(config):
         p.wait()
 
         if p.returncode != 0:
-            print(f"{CRITICAL}Build script exited with code {p.returncode}{CLEAR}")
-            exit(1)
+            raise CriticalException(f"Build script exited with code {p.returncode}")
 
     if config["deployment"]:
         did_something = True
@@ -472,16 +487,18 @@ def start_chall(config):
 
     Returns:
         tuple: The first element is a list of all started containers as docker.models.containers.Container instances. The second element is a list of formatted service strings for displaying to users.
+
+    Raises:
+        CriticalException: If the start fails
     """
 
     if not config["deployment"] or not config["deployment"]["containers"]:
         return [], []
 
     if config["deployment"]["type"] != "docker":
-        print(f'{CRITICAL}challtools only supports the "docker" deployment type{CLEAR}')
-        exit(1)
+        raise CriticalException('challtools only supports the "docker" deployment type')
 
-    client = get_docker_client_or_exit()
+    client = get_docker_client()
     tag_list = [
         tag.split(":")[0]
         for img in client.images.list()
@@ -496,27 +513,24 @@ def start_chall(config):
         )  # TODO check that the container hasn't already been started
 
         if tag not in tag_list:
-            print(
-                f'{CRITICAL}Cannot find image "{tag}". Make sure you have built the required docker images using "challtools build" before attempting to start them.{CLEAR}'
+            raise CriticalException(
+                f'Cannot find image "{tag}". Make sure you have built the required docker images using "challtools build" before attempting to start them.'
             )
-            exit(1)
 
     # TODO test that network and volume detection works
     network_list = [network.name for network in client.networks.list()]
     for network_name in config["deployment"]["networks"]:
         if network_name not in network_list:
-            print(
-                f'{CRITICAL}Cannot find network "{network_name}". Make sure you have created the required docker networks using "challtools build" before attempting to use them.{CLEAR}'
+            raise CriticalException(
+                f'Cannot find network "{network_name}". Make sure you have created the required docker networks using "challtools build" before attempting to use them.'
             )
-            exit(1)
 
     volume_list = [volume.name for volume in client.volumes.list()]
     for volume_name in config["deployment"]["volumes"]:
         if volume_name not in volume_list:
-            print(
-                f'{CRITICAL}Cannot find volume "{volume_name}". Make sure you have created the required docker volumes using "challtools build" before attempting to use them.{CLEAR}'
+            raise CriticalException(
+                f'Cannot find volume "{volume_name}". Make sure you have created the required docker volumes using "challtools build" before attempting to use them.'
             )
-            exit(1)
 
     containers = []
     service_strings = []
@@ -580,12 +594,15 @@ def start_solution(config):
 
     Returns:
         docker.models.containers.Container: The started docker container
+
+    Raises:
+        CriticalException: If the solution cannot be started correctly
     """
 
     if not config["solution_image"]:
         return None
 
-    client = get_docker_client_or_exit()
+    client = get_docker_client()
     tag_list = [
         tag.split(":")[0]
         for img in client.images.list()
@@ -596,10 +613,9 @@ def start_solution(config):
     )
 
     if solution_tag not in tag_list:
-        print(
-            f'{CRITICAL}Cannot find solution image "{solution_tag}". Make sure you have built the required solution docker image using "challtools build" before attempting to start it.{CLEAR}'
+        raise CriticalException(
+            f'Cannot find solution image "{solution_tag}". Make sure you have built the required solution docker image using "challtools build" before attempting to start it.'
         )
-        exit(1)
 
     service_strings = []
     available_port = 50000
