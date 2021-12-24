@@ -251,15 +251,15 @@ def start(args):
 def solve(args):  # TODO add support for solve script
     config = get_valid_config()
 
-    # if not config["solution_image"]:
-    #     print(f"{BOLD}No solution defined, cannot solve challenge{CLEAR}")
-    #     return 1
+    if not config["solution_image"]:
+        print(f"{BOLD}No solution defined, cannot solve challenge{CLEAR}")
+        return 0
 
     containers, service_strings = start_chall(config)
 
     if not containers:
         print(f"{BOLD}No services defined, there is nothing to solve{CLEAR}")
-        return 1
+        return 0
 
     # sleep to let challenge spin up
     time.sleep(3)
