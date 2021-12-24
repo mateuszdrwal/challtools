@@ -4,6 +4,7 @@ import argparse
 import os
 import uuid
 import hashlib
+import shutil
 from pathlib import Path
 import requests
 import yaml
@@ -93,6 +94,25 @@ def main():
         description="Push a challenge to the ctf platform",
     )
     push_parser.set_defaults(func=push)
+
+    init_parser = subparsers.add_parser(
+        "init",
+        description="Initialize a directory with template challenge files",
+    )
+    init_parser.add_argument("template", type=str, default="default", nargs="?")
+    init_parser.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="Force initialization even if the directory is not empty",
+    )
+    init_parser.add_argument(
+        "-l",
+        "--list",
+        action="store_true",
+        help="List existing templates",
+    )
+    init_parser.set_defaults(func=init)
 
     args = parser.parse_args()
 
@@ -535,4 +555,51 @@ def push(args):
         return 1
 
     print(f"{SUCCESS}Challenge pushed!{CLEAR}")
+    return 0
+
+
+def init(args):
+
+    if args.list:
+        for template_path in (Path(__file__).parent / "templates").iterdir():
+            print(
+                f"{template_path.name} - {(template_path/'DESCRIPTION').read_text().strip()}"
+            )
+
+        return 0
+
+    if any(Path(".").iterdir()) and not args.force:
+        raise CriticalException(
+            "The current directory is not empty. To proceed anyways, run with -f. This may overwrite some files."
+        )
+
+    template_dir = Path(__file__).parent / "templates" / args.template
+    target_dir = Path(".").absolute()
+    if not template_dir.is_dir():
+        raise CriticalException(
+            f"Could not find template {args.template}. Use -l to list available templates."
+        )
+
+    shutil.copytree(
+        template_dir,
+        target_dir,
+        dirs_exist_ok=True,
+        ignore=shutil.ignore_patterns("DESCRIPTION", "challenge.yml", "challenge.yaml"),
+    )
+
+    if (template_dir / "challenge.yml").is_file():
+        (target_dir / "challenge.yml").write_bytes(
+            (template_dir / "challenge.yml")
+            .read_bytes()
+            .replace(b"__ID__", str(uuid.uuid4()).encode())
+        )
+
+    if (template_dir / "challenge.yaml").is_file():
+        (target_dir / "challenge.yaml").write_bytes(
+            (template_dir / "challenge.yaml")
+            .read_bytes()
+            .replace(b"__ID__", str(uuid.uuid4()).encode())
+        )
+
+    print(f"{SUCCESS}Directory initialized!{CLEAR}")
     return 0
