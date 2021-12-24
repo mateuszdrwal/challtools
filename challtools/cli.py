@@ -130,16 +130,14 @@ def allchalls(args):
     parser = args.subparsers.choices.get(args.command[0])
 
     if not parser:
-        print(
-            f"{CRITICAL}Allchalls could not find the specified command to run on all challenges. Run {args.parser.prog} -h to view all commands.{CLEAR}"
+        raise CriticalException(
+            f"Allchalls could not find the specified command to run on all challenges. Run {args.parser.prog} -h to view all commands."
         )
-        return 1
 
     if get_ctf_config_path() == None:
-        print(
-            f"{CRITICAL}No CTF configuration file (ctf.yml) detected in the current directory or any parent directory, and therefore cannot discover challenges.{CLEAR}"
+        raise CriticalException(
+            "No CTF configuration file (ctf.yml) detected in the current directory or any parent directory, and therefore cannot discover challenges."
         )
-        return 1
 
     parser_args = parser.parse_args(args.command[1:])
     failed = False
@@ -293,8 +291,7 @@ def solve(args):  # TODO add support for solve script
     if validate_solution_output(config, output.decode()):
         print(f"{SUCCESS}Challenge solved successfully!{CLEAR}")
     else:
-        print(f"{CRITICAL}Challenge could not be solved{CLEAR}")
-        return 1
+        raise CriticalException("Challenge could not be solved")
 
     return 0
 
@@ -307,10 +304,9 @@ def compose(args):
         return 0
 
     if config["deployment"]["type"] != "docker":
-        print(
-            f'{CRITICAL}Only deployments of type "docker" can be used to create a docker-compose file{CLEAR}'
+        raise CriticalException(
+            'Only deployments of type "docker" can be used to create a docker-compose file'
         )
-        return 1
 
     compose = {
         "version": "3",
@@ -388,10 +384,9 @@ def ensureid(args):
     elif (path / "challenge.yaml").exists():
         path = path / "challenge.yaml"
     else:
-        print(
-            f"{CRITICAL}Could not find a challenge.yml file in this directory.{CLEAR}"
+        raise CriticalException(
+            "Could not find a challenge.yml file in this directory."
         )
-        return 1
 
     with path.open() as f:
         raw_config = f.read()
@@ -410,10 +405,11 @@ def ensureid(args):
                 ]
             )
         )
-        print(
-            f"\n{CRITICAL}There are critical config validation errors. Please fix them before continuing."
+        print()
+        raise CriticalException(
+            "There are critical config validation errors. Please fix them before continuing."
         )
-        return 1
+
     config = validator.normalized_config
 
     if config["challenge_id"]:
@@ -439,10 +435,9 @@ def ensureid(args):
         assert process_messages(messages)["highest_level"] != 5
         assert validator.normalized_config == config
     except (yaml.reader.ReaderError, KeyError, AssertionError):
-        print(
-            f"{CRITICAL}Could not automatically add the ID to the config. Here is a random ID for you to add manually: {uuid.uuid4()}{CLEAR}"
+        raise CriticalException(
+            f"Could not automatically add the ID to the config. Here is a random ID for you to add manually: {uuid.uuid4()}"
         )
-        return 1
 
     path.write_text(raw_config)
     print(f"{SUCCESS}Challenge ID written to config!{CLEAR}")
@@ -454,20 +449,17 @@ def push(args):
     ctf_config = load_ctf_config()
 
     if not config["challenge_id"]:
-        print(f"{CRITICAL}ID not configured in the challenge configuration file{CLEAR}")
-        return 1
+        raise CriticalException("ID not configured in the challenge configuration file")
 
     if not ctf_config.get("custom", {}).get("platform_url"):
-        print(
-            f"{CRITICAL}Platform URL not configured in the CTF configuration file{CLEAR}"
+        raise CriticalException(
+            "Platform URL not configured in the CTF configuration file"
         )
-        return 1
 
     if not ctf_config.get("custom", {}).get("platform_api_key"):
-        print(
-            f"{CRITICAL}Platform API key not configured in the CTF configuration file{CLEAR}"
+        raise CriticalException(
+            "Platform API key not configured in the CTF configuration file"
         )
-        return 1
 
     file_urls = []
 
@@ -476,16 +468,14 @@ def push(args):
     else:
 
         if not ctf_config.get("custom", {}).get("bucket"):
-            print(
-                f"{CRITICAL}Bucket not configured in the CTF configuration file{CLEAR}"
+            raise CriticalException(
+                "Bucket not configured in the CTF configuration file"
             )
-            return 1
 
         if not ctf_config.get("custom", {}).get("secret"):
-            print(
-                f"{CRITICAL}Secret not configured in the CTF configuration file{CLEAR}"
+            raise CriticalException(
+                "Secret not configured in the CTF configuration file"
             )
-            return 1
 
         storage_client = storage.Client()
         bucket = storage_client.bucket(ctf_config["custom"]["bucket"])
@@ -551,8 +541,7 @@ def push(args):
     )
 
     if r.status_code != 200:
-        print(f"{CRITICAL}Request failed with status {r.status_code}{CLEAR}")
-        return 1
+        raise CriticalException(f"Request failed with status {r.status_code}")
 
     print(f"{SUCCESS}Challenge pushed!{CLEAR}")
     return 0
