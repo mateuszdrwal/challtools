@@ -173,7 +173,7 @@ def get_valid_config():
             )
         )
         print(
-            f"\n{HIGH}There are config validation issues of high severity. You probably want to fix them."
+            f"\n{HIGH}There are config validation issues of high severity. You probably want to fix them.{CLEAR}"
         )
 
     return validator.normalized_config
