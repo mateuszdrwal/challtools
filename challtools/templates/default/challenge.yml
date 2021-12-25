@@ -5,7 +5,8 @@ authors:
 categories:
   - Default Category
 
-flag_format_prefix: CTF{
+# comment the following line to not use the flag format
+flag_format_prefix: __FLAG_FORMAT_PREFIX__
 flags: d3f4ul7_fl46
 
 # downloadable_files:

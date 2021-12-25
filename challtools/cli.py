@@ -588,18 +588,26 @@ def init(args):
     )
 
     if (template_dir / "challenge.yml").is_file():
-        (target_dir / "challenge.yml").write_bytes(
-            (template_dir / "challenge.yml")
-            .read_bytes()
-            .replace(b"__ID__", str(uuid.uuid4()).encode())
-        )
+        target_conf = target_dir / "challenge.yml"
+        content = (template_dir / "challenge.yml").read_bytes()
 
     if (template_dir / "challenge.yaml").is_file():
-        (target_dir / "challenge.yaml").write_bytes(
-            (template_dir / "challenge.yaml")
-            .read_bytes()
-            .replace(b"__ID__", str(uuid.uuid4()).encode())
-        )
+        target_conf = target_dir / "challenge.yaml"
+        content = (template_dir / "challenge.yaml").read_bytes()
+
+    ctf_config = load_ctf_config() or {}
+
+    replacements = {
+        b"__ID__": str(uuid.uuid4()).encode(),
+        b"__FLAG_FORMAT_PREFIX__": ctf_config.get("flag_format_prefixes", ["CTF{"])[
+            0
+        ].encode(),
+    }
+
+    for marker, replacement in replacements.items():
+        content = content.replace(marker, replacement)
+
+    target_conf.write_bytes(content)
 
     print(f"{SUCCESS}Directory initialized!{CLEAR}")
     return 0
