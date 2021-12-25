@@ -84,7 +84,11 @@ class ConfigValidator:
         try:
             validate(instance=self.config, schema=schema)
         except ValidationError as e:
-            self._raise_code("A002", None, message=e.message)
+            self._raise_code(
+                "A002",
+                ".".join(e.absolute_path) if e.absolute_path else "root",
+                message=e.message,
+            )
             return (
                 True,
                 self.messages,

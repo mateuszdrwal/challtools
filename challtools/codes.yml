@@ -7,7 +7,7 @@ A001:
 A002:
   name: Schema violation
   level: 5
-  formatted_message: "The challenge schema has been violated: {message}"
+  formatted_message: "The challenge schema has been violated at {field_name}: {message}"
   docs_message: The challenge schema has been violated in some way.
 A003:
   name: Downloadable file missing
