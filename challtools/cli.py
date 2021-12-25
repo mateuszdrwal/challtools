@@ -35,20 +35,26 @@ def main():
     )
     subparsers = parser.add_subparsers()
 
-    # TODO add help strings
+    allchalls_desc = "Runs a different command on every challenge in this ctf"
     allchalls_parser = subparsers.add_parser(
-        "allchalls",
-        description="Runs a different command on every challenge in this ctf",
+        "allchalls", description=allchalls_desc, help=allchalls_desc
     )
     allchalls_parser.add_argument("command", nargs=argparse.REMAINDER)
-    allchalls_parser.add_argument("-e", "--exit-on-failure", action="store_true")
+    allchalls_parser.add_argument(
+        "-e",
+        "--exit-on-failure",
+        action="store_true",
+        help="Exit as soon as the command fails on any challenge",
+    )
     allchalls_parser.set_defaults(func=allchalls, subparsers=subparsers, parser=parser)
 
+    validate_desc = "Validates a challenge to make sure it's defined properly"
     validate_parser = subparsers.add_parser(
-        "validate",
-        description="Validates a challenge to make sure it's defined properly",
+        "validate", description=validate_desc, help=validate_desc
     )
-    validate_parser.add_argument("-v", "--verbose", action="store_true")
+    validate_parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Show message details"
+    )
     validate_parser.add_argument(
         "-e",
         "--error-level",
@@ -58,47 +64,52 @@ def main():
     )
     validate_parser.set_defaults(func=validate)
 
+    build_desc = (
+        "Builds a challenge by running its build script and building docker images"
+    )
     build_parser = subparsers.add_parser(
-        "build",
-        description="Builds a challenge by running its build script and building docker images",
+        "build", description=build_desc, help=build_desc
     )
     build_parser.set_defaults(func=build)
 
+    start_desc = "Starts a challenge by running its docker images"
     start_parser = subparsers.add_parser(
-        "start",
-        description="Starts a challenge by running its docker images",
+        "start", description=start_desc, help=start_desc
     )
-    start_parser.add_argument("-b", "--build", action="store_true")
+    start_parser.add_argument(
+        "-b",
+        "--build",
+        action="store_true",
+        help="Rebuild the challenge before starting",
+    )
     start_parser.set_defaults(func=start)
 
+    solve_desc = "Starts a challenge by running its docker images, and procedes to solve it using the solution container"
     solve_parser = subparsers.add_parser(
-        "solve",
-        description="Starts a challenge by running its docker images, and procedes to solve it using the solution container",
+        "solve", description=solve_desc, help=solve_desc
     )
     solve_parser.set_defaults(func=solve)
 
+    compose_desc = "Writes a docker-compose.yml file to the challenge directory which can be used to run all challenge services"
     compose_parser = subparsers.add_parser(
-        "compose",
-        description="Writes a docker-compose.yml file to the challenge directory which can be used to run all challenge services",
+        "compose", description=compose_desc, help=compose_desc
     )
     compose_parser.set_defaults(func=compose)
 
+    ensureid_desc = (
+        "Checks if a challenge has a challenge ID, and if not, generates and adds one"
+    )
     ensureid_parser = subparsers.add_parser(
-        "ensureid",
-        description="Checks if a challenge has a challenge ID, and if not, generates and adds one",
+        "ensureid", description=ensureid_desc, help=ensureid_desc
     )
     ensureid_parser.set_defaults(func=ensureid)
 
-    push_parser = subparsers.add_parser(
-        "push",
-        description="Push a challenge to the ctf platform",
-    )
+    push_desc = "Push a challenge to the ctf platform"
+    push_parser = subparsers.add_parser("push", description=push_desc, help=push_desc)
     push_parser.set_defaults(func=push)
 
-    init_parser = subparsers.add_parser(
-        "init",
-        description="Initialize a directory with template challenge files",
-    )
+    init_desc = "Initialize a directory with template challenge files"
+    init_parser = subparsers.add_parser("init", description=init_desc, help=init_desc)
     init_parser.add_argument("template", type=str, default="default", nargs="?")
     init_parser.add_argument(
         "-f",
