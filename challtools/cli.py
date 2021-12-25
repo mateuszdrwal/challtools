@@ -8,6 +8,7 @@ import shutil
 from pathlib import Path
 import requests
 import yaml
+import docker
 from google.cloud import storage
 
 from .validator import ConfigValidator
@@ -243,20 +244,43 @@ def start(args):
         print(f"{BOLD}No services defined, nothing to do{CLEAR}")
         return 0
 
+    if len(containers) > 1:
+        print(
+            f"{HIGH}challtools does not properly support multiple containers yet. All are started, but you will only see information for the first container.{CLEAR}"
+        )
+
     if service_strings:
         print(f"{BOLD}Services:\n" + "\n".join(service_strings) + f"{CLEAR}")
 
     try:
         for log in containers[0].logs(
-            stream=True
+            stream=True, stderr=True
         ):  # TODO print logs from all containers, probably stream=False and a for loop iterating over all containers in a while true loop
             sys.stdout.write(log.decode())
     except KeyboardInterrupt:
         print(f"{BOLD}Stopping...{CLEAR}")
         for container in containers:
-            container.kill()
+            try:
+                container.kill()
+            except docker.errors.APIError:
+                pass
+            try:
+                container.remove()
+            except docker.errors.APIError:
+                pass
+        return 0
 
-    return 0
+    for container in containers:
+        try:
+            container.kill()
+        except docker.errors.APIError:
+            pass
+        try:
+            container.remove()
+        except docker.errors.APIError:
+            pass
+    print(f"{HIGH}The container exited by itself.{CLEAR}")
+    return 1
 
 
 def solve(args):  # TODO add support for solve script

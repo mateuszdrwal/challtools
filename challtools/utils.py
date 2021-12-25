@@ -590,7 +590,6 @@ def start_chall(config):
             tag,
             ports=ports,
             detach=True,
-            auto_remove=True,
             environment={"TEST": "true"},
             # TODO volumes
         )
