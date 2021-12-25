@@ -111,8 +111,13 @@ def load_ctf_config():
     return config if config else {}
 
 
-def load_config(workdir="."):
-    """Loads the challenge configuration file from the current or a specified directory.
+def load_config(workdir=".", search=True, cd=True):
+    """Loads the challenge configuration file from the current directory, a specified directory, or optionally one of their parent directories. Optionally changes the working directory to the directory of the configuration file.
+
+    Args:
+        workdir (string): The directory to search for the configuration file from
+        search (bool): If the parent directories of the starting directory should be searched for the configuration file
+        cd (bool): If the working directory should be set to the directory the configuration file is found in
 
     Returns:
         dict: The config
@@ -120,25 +125,39 @@ def load_config(workdir="."):
     Raises:
         CriticalException: If the challenge configuration cannot be found
     """
-    path = Path(workdir)
-    if (path / "challenge.yml").exists():
-        path = path / "challenge.yml"
-    elif (path / "challenge.yaml").exists():
-        path = path / "challenge.yaml"
+
+    workdir = Path(workdir).absolute()
+
+    for directory in [workdir, *(workdir.parents if search else [])]:
+        path = Path(directory)
+        if (path / "challenge.yml").exists():
+            path = path / "challenge.yml"
+            break
+        elif (path / "challenge.yaml").exists():
+            path = path / "challenge.yaml"
+            break
     else:
         raise CriticalException(
-            "Could not find a challenge.yml file in this directory."
+            f"Could not find a challenge.yml file in this{' or a parent' if search else ''} directory."
         )
 
     with path.open() as f:
         raw_config = f.read()
     config = yaml.safe_load(raw_config)
 
+    if cd:
+        path.parent.cwd()
+
     return config
 
 
-def get_valid_config():
+def get_valid_config(workdir=None, search=True, cd=True):
     """Loads the challenge configuration file from the current directory and makes sure its valid.
+
+    Args:
+        workdir (string): The directory to search for the configuration file from
+        search (bool): If the parent directories of the starting directory should be searched for the configuration file
+        cd (bool): If the working directory should be set to the directory the configuration file is found in
 
     Returns:
         dict: The normalized config
@@ -146,7 +165,9 @@ def get_valid_config():
     Raises:
         CriticalException: If there are critical validation errors
     """
-    config = load_config()
+    config = load_config(
+        search=search, cd=cd, **{"workdir": workdir} if workdir else {}
+    )
 
     validator = ConfigValidator(config)
     messages = validator.validate()[1]
