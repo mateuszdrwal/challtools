@@ -1,7 +1,7 @@
-import shutil
 import os
 from pathlib import Path
 from challtools.cli import main
+from challtools.utils import _copytree
 
 testpath = Path(__file__).parent
 templatepath = testpath / "templates"
@@ -17,7 +17,7 @@ def populate_dir(path, template):
     if not (templatepath / template).is_dir():
         raise ValueError("Template not found")
 
-    shutil.copytree(templatepath / template, path, dirs_exist_ok=True)
+    _copytree(templatepath / template, path)
 
 
 def main_wrapper(args):

@@ -25,6 +25,7 @@ from .utils import (
     start_solution,
     validate_solution_output,
     format_user_service,
+    _copytree,
 )
 from .constants import *
 
@@ -604,10 +605,9 @@ def init(args):
             f"Could not find template {args.template}. Use -l to list available templates."
         )
 
-    shutil.copytree(
+    _copytree(
         template_dir,
         target_dir,
-        dirs_exist_ok=True,
         ignore=shutil.ignore_patterns("DESCRIPTION", "challenge.yml", "challenge.yaml"),
     )
 
