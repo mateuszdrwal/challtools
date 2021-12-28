@@ -1,0 +1,26 @@
+name: pytest
+
+on:
+  - push
+  - pull_request
+  - workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        python: ["3.6","3.7","3.8","3.9","3.10"]
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python }}
+    - name: Install challtools
+      run: |
+        python setup.py install
+        python -m pip install pytest
+    - name: pytest
+      run: |
+        pytest
