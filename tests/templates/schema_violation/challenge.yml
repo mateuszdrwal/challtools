@@ -1,0 +1,9 @@
+title: Challtools test
+description: Default description
+authors:
+  - Default Author
+categories:
+  - Default Category
+
+flag_format_prefix: CTF{
+flags: d3f4ul7_fl46

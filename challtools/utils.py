@@ -104,8 +104,7 @@ def load_ctf_config():
     if not ctfpath:
         return None
 
-    with ctfpath.open() as f:
-        raw_config = f.read()
+    raw_config = ctfpath.read_text()
     config = yaml.safe_load(raw_config)
 
     return config if config else {}
@@ -141,8 +140,7 @@ def load_config(workdir=".", search=True, cd=True):
             f"Could not find a challenge.yml file in this{' or a parent' if search else ''} directory."
         )
 
-    with path.open() as f:
-        raw_config = f.read()
+    raw_config = path.read_text()
     config = yaml.safe_load(raw_config)
 
     if cd:
@@ -252,7 +250,8 @@ def get_first_text_flag(config):
         config (dict): The normalized challenge config
 
     Returns:
-        string: A valid flag. May be an empty string, in which case it's probably not a valid flag. This happens if there is no text type flag.
+        string: A valid flag.
+        None: If there was no text type flag
     """
 
     text_flag = None
@@ -261,7 +260,7 @@ def get_first_text_flag(config):
             text_flag = flag["flag"]
             break
     else:
-        return ""
+        return None
 
     if not config["flag_format_prefix"]:
         return text_flag

@@ -29,7 +29,7 @@ from .utils import (
 from .constants import *
 
 
-def main():
+def main(passed_args=None):
     parser = argparse.ArgumentParser(
         prog="challtools",
         description="A tool for managing CTF challenges and challenge repositories using the OpenChallSpec",
@@ -126,7 +126,7 @@ def main():
     )
     init_parser.set_defaults(func=init)
 
-    args = parser.parse_args()
+    args = parser.parse_args(passed_args)
 
     if not getattr(args, "func", None):
         parser.print_usage()

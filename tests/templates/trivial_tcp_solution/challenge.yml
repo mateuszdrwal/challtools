@@ -1,0 +1,18 @@
+title: Challtools test
+description: Default description
+authors:
+  - Default Author
+categories:
+  - Default Category
+
+flag_format_prefix: CTF{
+flags: d3f4ul7_fl46
+
+service:
+  type: tcp
+  image: container
+  internal_port: 13337
+
+solution_image: solution
+
+spec: 0.0.1

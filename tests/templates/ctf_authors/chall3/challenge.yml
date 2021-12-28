@@ -1,0 +1,13 @@
+title: Challtools test
+description: Default description
+authors:
+  - Default Author
+categories:
+  - Default Category
+
+flag_format_prefix: CTF{
+flags: d3f4ul7_fl46
+
+spec: 0.0.1
+
+challenge_id: 920fa577-cf26-4b02-afb9-ff3d29fcb753

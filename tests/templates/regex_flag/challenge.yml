@@ -1,0 +1,13 @@
+title: Challtools test
+description: Default description
+authors:
+  - Default Author
+categories:
+  - Default Category
+
+flag_format_prefix: CTF{
+flags:
+  - flag: ^\d+$
+    type: regex
+
+spec: 0.0.1
