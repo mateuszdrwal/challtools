@@ -13,7 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/mateuszdrwal/challtools",
     packages=setuptools.find_packages(),
-    package_data={"": ["challenge.schema.json", "codes.yml"]},
+    package_data={"": ["challenge.schema.json", "codes.yml", "templates"]},
     include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
