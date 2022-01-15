@@ -5,6 +5,7 @@ from challtools.utils import get_docker_client
 
 def pytest_addoption(parser):
     parser.addoption("--docker-fails", action="store_true")
+    parser.addoption("--docker-strict", action="store_true")
 
 
 def pytest_collection_modifyitems(session, config, items):
@@ -12,7 +13,7 @@ def pytest_collection_modifyitems(session, config, items):
         if config.option.docker_fails and "fails_without_docker" in set(
             marker.name for marker in item.own_markers
         ):
-            item.add_marker(pytest.mark.xfail(strict=True))
+            item.add_marker(pytest.mark.xfail(strict=config.option.docker_strict))
 
 
 @pytest.fixture(scope="session")
