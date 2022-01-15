@@ -6,6 +6,7 @@ import uuid
 import hashlib
 import shutil
 from pathlib import Path
+import pkg_resources
 import requests
 import yaml
 import docker
@@ -586,7 +587,9 @@ def push(args):
 def init(args):
 
     if args.list:
-        for template_path in (Path(__file__).parent / "templates").iterdir():
+        for template_path in Path(
+            pkg_resources.resource_filename("challtools", "templates")
+        ).iterdir():
             print(
                 f"{template_path.name} - {(template_path/'DESCRIPTION').read_text().strip()}"
             )
@@ -598,7 +601,9 @@ def init(args):
             "The current directory is not empty. To proceed anyways, run with -f. This may overwrite some files."
         )
 
-    template_dir = Path(__file__).parent / "templates" / args.template
+    template_dir = (
+        Path(pkg_resources.resource_filename("challtools", "templates")) / args.template
+    )
     target_dir = Path(".").absolute()
     if not template_dir.is_dir():
         raise CriticalException(
