@@ -31,7 +31,6 @@ setuptools.setup(
         "jsonschema",
         "docker",
         "requests",
-        "google-cloud-storage",
         'pypiwin32;platform_system=="Windows"',
     ],
 )
