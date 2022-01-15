@@ -23,7 +23,7 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Install challtools
         run: |
-          python setup.py install
+          python -m pip install .
           python -m pip install pytest pytest-cov
       - name: pytest
         run: |
