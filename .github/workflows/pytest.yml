@@ -13,6 +13,9 @@ jobs:
       matrix:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
         python: ["3.6", "3.7", "3.8", "3.9", "3.10"]
+        include:
+          - os: macos-latest
+            pytest_args: --docker-fails
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -24,9 +27,4 @@ jobs:
           python -m pip install pytest pytest-cov
       - name: pytest
         run: |
-          if [ '${{ matrix.os }}' == 'macos-latest' ]
-          then
-            pytest --docker-fails
-          else
-            pytest
-          fi
+          pytest ${{ matrix.pytest_args }}
