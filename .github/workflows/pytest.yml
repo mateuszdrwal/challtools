@@ -24,4 +24,9 @@ jobs:
           python -m pip install pytest pytest-cov
       - name: pytest
         run: |
-          pytest
+          if [ '${{ matrix.os }}' == 'macos-latest' ]
+          then
+            pytest --docker-fails
+          else
+            pytest
+          fi
