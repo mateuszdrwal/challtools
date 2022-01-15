@@ -16,6 +16,8 @@ jobs:
         include:
           - os: macos-latest
             pytest_args: --docker-fails
+          - os: windows-latest
+            pytest_args: --docker-fails
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
