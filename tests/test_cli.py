@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import yaml
+import pytest
 from challtools.utils import build_chall, get_valid_config
 from utils import populate_dir, main_wrapper, inittemplatepath
 
@@ -40,6 +41,7 @@ class Test_build:
         assert main_wrapper(["build"]) == 0
         assert "nothing to do" in capsys.readouterr().out.lower()
 
+    @pytest.mark.fails_without_docker
     def test_single(self, tmp_path, docker_client):
         populate_dir(tmp_path, "trivial_tcp")
         assert main_wrapper(["build"]) == 0
@@ -47,6 +49,7 @@ class Test_build:
             tag for image in docker_client.images.list() for tag in image.tags
         ]
 
+    @pytest.mark.fails_without_docker
     def test_solution(self, tmp_path, docker_client):
         populate_dir(tmp_path, "trivial_tcp_solution")
         assert main_wrapper(["build"]) == 0
@@ -57,10 +60,13 @@ class Test_build:
         assert "challtools_test_challenge_f9629917705648c9:latest" in tags
         assert "sol_challtools_test_9461485faadf529f:latest" in tags
 
-    def test_build_error(self, tmp_path):
+    @pytest.mark.fails_without_docker
+    def test_build_error(self, tmp_path, capsys):
         populate_dir(tmp_path, "build_error")
         assert main_wrapper(["build"]) == 1
+        assert "copy failed:" in capsys.readouterr().out.lower()
 
+    @pytest.mark.fails_without_docker
     def test_parse_error(self, tmp_path, capsys):
         populate_dir(tmp_path, "dockerfile_parse_error")
         assert main_wrapper(["build"]) == 1
@@ -79,12 +85,14 @@ class Test_solve:
         assert main_wrapper(["solve"]) == 0
         assert "no solution defined" in capsys.readouterr().out.lower()
 
+    @pytest.mark.fails_without_docker
     def test_ok(self, tmp_path, capsys):
         populate_dir(tmp_path, "trivial_tcp_solution")
         build_chall(get_valid_config())
         assert main_wrapper(["solve"]) == 0
         assert "solved" in capsys.readouterr().out.lower()
 
+    @pytest.mark.fails_without_docker
     def test_fail(self, tmp_path, capsys):
         populate_dir(tmp_path, "broken_solution")
         build_chall(get_valid_config())

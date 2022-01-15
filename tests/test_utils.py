@@ -242,6 +242,7 @@ class Test_validate_flag:
 
 
 class Test_build_image:
+    @pytest.mark.fails_without_docker
     def test_simple(self, tmp_path, docker_client, clean_container_state):
         populate_dir(tmp_path, "trivial_tcp")
         build_image("container", "challtools_test", docker_client)
@@ -253,6 +254,7 @@ class Test_build_image:
 class Test_build_chall:
     # TODO challenges with muliple containers
     # TODO build scripts
+    @pytest.mark.fails_without_docker
     def test_trivial_tcp(self, tmp_path, docker_client, clean_container_state):
         populate_dir(tmp_path, "trivial_tcp")
         assert build_chall(get_valid_config())
@@ -260,6 +262,7 @@ class Test_build_chall:
             tag for image in docker_client.images.list() for tag in image.tags
         ]
 
+    @pytest.mark.fails_without_docker
     def test_solution(self, tmp_path, docker_client, clean_container_state):
         populate_dir(tmp_path, "trivial_tcp_solution")
         assert build_chall(get_valid_config())
@@ -270,7 +273,8 @@ class Test_build_chall:
 
 class Test_start_chall:
     # TODO challenges with muliple containers
-    def test_single(self, tmp_path, docker_client, clean_container_state):
+    @pytest.mark.fails_without_docker
+    def test_single(self, tmp_path, clean_container_state):
         populate_dir(tmp_path, "trivial_tcp")
         config = get_valid_config()
         build_chall(config)
@@ -278,7 +282,8 @@ class Test_start_chall:
         assert len(containers) == len(services) == 1
         assert re.match(r"nc 127.0.0.1 \d+", services[0])
 
-    def test_missing(self, tmp_path, docker_client, clean_container_state):
+    @pytest.mark.fails_without_docker
+    def test_missing(self, tmp_path, clean_container_state):
         populate_dir(tmp_path, "minimal_valid")
         config = get_valid_config()
         build_chall(config)
@@ -287,14 +292,16 @@ class Test_start_chall:
 
 
 class Test_start_solution:
-    def test_simple(self, tmp_path, docker_client, clean_container_state):
+    @pytest.mark.fails_without_docker
+    def test_simple(self, tmp_path, clean_container_state):
         populate_dir(tmp_path, "trivial_tcp_solution")
         config = get_valid_config()
         build_chall(config)
         container = start_solution(config)
         assert container.image.tags[0] == "sol_challtools_test_9461485faadf529f:latest"
 
-    def test_missing(self, tmp_path, docker_client, clean_container_state):
+    @pytest.mark.fails_without_docker
+    def test_missing(self, tmp_path, clean_container_state):
         populate_dir(tmp_path, "trivial_tcp")
         config = get_valid_config()
         build_chall(config)

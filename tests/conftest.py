@@ -3,6 +3,18 @@ import docker
 from challtools.utils import get_docker_client
 
 
+def pytest_addoption(parser):
+    parser.addoption("--docker-fails", action="store_true")
+
+
+def pytest_collection_modifyitems(session, config, items):
+    for item in items:
+        if config.option.docker_fails and "fails_without_docker" in set(
+            marker.name for marker in item.own_markers
+        ):
+            item.add_marker(pytest.mark.xfail(strict=True))
+
+
 @pytest.fixture(scope="session")
 def docker_client():
     return get_docker_client()
