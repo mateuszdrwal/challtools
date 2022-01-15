@@ -10,7 +10,6 @@ import pkg_resources
 import requests
 import yaml
 import docker
-from google.cloud import storage
 
 from .validator import ConfigValidator
 from .utils import (
@@ -497,6 +496,11 @@ def push(args):
         raise CriticalException(
             "Platform API key not configured in the CTF configuration file"
         )
+
+    try:
+        from google.cloud import storage
+    except ImportError:
+        raise CriticalException("google-cloud-storage is not installed!")
 
     file_urls = []
 
