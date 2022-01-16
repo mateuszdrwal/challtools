@@ -28,9 +28,9 @@ setuptools.setup(
     entry_points={"console_scripts": ["challtools = challtools.cli:main"]},
     install_requires=[
         "PyYAML",
-        "jsonschema",
-        "docker",
-        "requests",
+        "jsonschema>=3.0.0",
+        "docker>=2.3.0,!=3.1.2,!=5.0.0",
+        "requests>=2.0.0",
         'pypiwin32;platform_system=="Windows"',
     ],
 )
