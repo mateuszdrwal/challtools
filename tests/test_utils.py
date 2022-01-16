@@ -139,7 +139,7 @@ class Test_get_first_text_flag:
 
 class Test_create_docker_name:
     def check_valid(self, name):
-        assert name.isascii()
+        assert all(ord(c) < 128 for c in name)
         # docker tags can typically be 128 long, but here we check for 124 since challtools prefixes solution cointainers with "sol_"
         assert re.match(r"[\w][\w.-]{,123}", name)
 
