@@ -1,0 +1,21 @@
+title: Default title
+description: Default description
+authors:
+  - Default Author
+categories:
+  - Default Category
+
+# comment the following line to not use the flag format
+flag_format_prefix: __FLAG_FORMAT_PREFIX__
+flags: d3f4ul7_fl46
+
+service:
+  type: website
+  image: container
+  internal_port: 1337
+
+# downloadable_files:
+#   - container/server.py
+
+challenge_id: __ID__
+spec: 0.0.1
