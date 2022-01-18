@@ -136,6 +136,7 @@ class ConfigValidator:
                             }
                         ],
                         "extra_exposed_ports": [],
+                        "privileged": self.normalized_config["service"]["privileged"],
                     },
                 },
                 "networks": {},

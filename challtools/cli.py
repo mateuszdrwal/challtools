@@ -405,6 +405,9 @@ def compose(args):
         if networks:
             compose_service["networks"] = networks
 
+        if container["privileged"]:
+            compose_service["privileged"] = True
+
         compose["services"][name] = compose_service
 
     Path("docker-compose.yml").write_text(yaml.dump(compose))

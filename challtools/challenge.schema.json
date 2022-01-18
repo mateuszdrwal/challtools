@@ -265,6 +265,10 @@
                 "external_port": {
                     "type": "integer",
                     "minimum": 0
+                },
+                "privileged": {
+                    "type": "boolean",
+                    "default": false
                 }
             }
         },
@@ -303,7 +307,8 @@
                                     "type": "object",
                                     "required": [
                                         "type",
-                                        "internal_port"
+                                        "internal_port",
+                                        "external_port"
                                     ],
                                     "additionalProperties": false,
                                     "properties": {
@@ -344,6 +349,10 @@
                                         }
                                     }
                                 }
+                            },
+                            "privileged": {
+                                "type": "boolean",
+                                "default": false
                             }
                         }
                     }
