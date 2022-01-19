@@ -5,7 +5,7 @@ authors:
 categories:
   - Default Category
 
-# comment the following line to not use the flag format
+# set the flag_format_prefix to `null` to not use the flag format
 flag_format_prefix: __FLAG_FORMAT_PREFIX__
 flags: d3f4ul7_fl46
 
