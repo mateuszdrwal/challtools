@@ -395,12 +395,13 @@ def build_image(image, tag, client):
             )
 
             for chunk in stream:
-                decoded = json.loads(chunk)
-                # TODO process progress bars for pulling
-                if "error" in decoded:
-                    raise CriticalException(decoded["error"])
-                if "stream" in decoded:
-                    print(decoded["stream"], end="")
+                for line in chunk.strip().split(b"\n"):
+                    decoded = json.loads(line)
+                    # TODO process progress bars for pulling
+                    if "error" in decoded:
+                        raise CriticalException(decoded["error"])
+                    if "stream" in decoded:
+                        print(decoded["stream"], end="")
 
         except docker.errors.APIError as e:
             raise CriticalException(e.explanation)
