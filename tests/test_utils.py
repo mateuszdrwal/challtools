@@ -96,6 +96,11 @@ class Test_get_valid_config:
         with pytest.raises(CriticalException):
             get_valid_config()
 
+    def test_invalid_list(self, tmp_path):
+        populate_dir(tmp_path, "schema_violation_list")
+        with pytest.raises(CriticalException):
+            get_valid_config()
+
 
 class Test_discover_challenges:
     def test_root(self, tmp_path):

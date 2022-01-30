@@ -33,6 +33,11 @@ class Test_validate:
         assert main_wrapper(["validate"]) == 1
         assert "A002" in capsys.readouterr().out
 
+    def test_schema_violation_list(self, tmp_path, capsys):
+        populate_dir(tmp_path, "schema_violation_list")
+        assert main_wrapper(["validate"]) == 1
+        assert "A002" in capsys.readouterr().out
+
 
 class Test_build:
     # TODO build scripts
