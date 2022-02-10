@@ -236,9 +236,15 @@ def get_docker_client():
     try:
         client = docker.from_env()
         client.images.list()
-    except (requests.exceptions.ConnectionError, docker.errors.DockerException):
+    except (requests.exceptions.ConnectionError, docker.errors.DockerException) as e:
+        lastrow = ""
+        if "FileNotFoundError" in e.args[0]:
+            lastrow = CRITICAL + "\nIs Docker installed and running?"
+        if "PermissionError" in e.args[0]:
+            lastrow = CRITICAL + "\nTry running with elevated privelages"
         raise CriticalException(
-            "challtools needs root permissions to run docker (run with sudo)"
+            f"The following error was recieved when attempting to contact the Docker daemon:\033[22m\n{e.args[0]}"
+            + lastrow
         )
 
     return client
