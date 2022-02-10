@@ -135,7 +135,7 @@ def main(passed_args=None):
         try:
             exit(args.func(args))
         except CriticalException as e:
-            print(CRITICAL + e.args[0])
+            print(CRITICAL + e.args[0] + CLEAR)
             exit(1)
 
 
@@ -161,7 +161,7 @@ def allchalls(args):
         try:
             exit_code = parser_args.func(parser_args)
         except CriticalException as e:
-            print(CRITICAL + e.args[0])
+            print(CRITICAL + e.args[0] + CLEAR)
             exit_code = 1
 
         if exit_code:
