@@ -1,3 +1,4 @@
+# PYTHON_ARGCOMPLETE_OK
 import sys
 import time
 import argparse
@@ -10,7 +11,7 @@ import pkg_resources
 import requests
 import yaml
 import docker
-
+import argcomplete
 from .validator import ConfigValidator
 from .utils import (
     CriticalException,
@@ -35,7 +36,7 @@ def main(passed_args=None):
         prog="challtools",
         description="A tool for managing CTF challenges and challenge repositories using the OpenChallSpec",
     )
-    subparsers = parser.add_subparsers()
+    subparsers = parser.add_subparsers(metavar="COMMAND")
 
     allchalls_desc = "Runs a different command on every challenge in this ctf"
     allchalls_parser = subparsers.add_parser(
@@ -112,7 +113,9 @@ def main(passed_args=None):
 
     init_desc = "Initialize a directory with template challenge files"
     init_parser = subparsers.add_parser("init", description=init_desc, help=init_desc)
-    init_parser.add_argument("template", type=str, default="default", nargs="?")
+    init_parser.add_argument(
+        "template", type=str, default="default", nargs="?"
+    ).completer = templateCompleter
     init_parser.add_argument(
         "-f",
         "--force",
@@ -132,6 +135,8 @@ def main(passed_args=None):
         "spoilerfree", description=spoilerfree_desc, help=spoilerfree_desc
     )
     spoilerfree_parser.set_defaults(func=spoilerfree)
+
+    argcomplete.autocomplete(parser, always_complete_options=False)
 
     args = parser.parse_args(passed_args)
 
@@ -653,6 +658,15 @@ def init(args):
 
     print(f"{SUCCESS}Directory initialized!{CLEAR}")
     return 0
+
+
+def templateCompleter(**kwargs):
+    return [
+        path.name
+        for path in Path(
+            pkg_resources.resource_filename("challtools", "templates")
+        ).iterdir()
+    ]
 
 
 def spoilerfree(args):

@@ -113,3 +113,7 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
 ```
+
+## Autocompletion
+
+challtools supports shell autocomplete through [argcomplete](https://github.com/kislyuk/argcomplete). To use it, either [activate global completion](https://github.com/kislyuk/argcomplete#activating-global-completion) or enable it manually for [bash](https://github.com/kislyuk/argcomplete#synopsis), [zsh](https://github.com/kislyuk/argcomplete#zsh-support) or [fish](https://github.com/kislyuk/argcomplete#fish-support) (remember to replace `my-awesome-script` with `challtools`).
