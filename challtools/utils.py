@@ -294,12 +294,17 @@ def create_docker_name(title, container_name=None, chall_id=None):
     title = re.sub(r"[^A-Za-z0-9_.-]", "", title)
     title = title.lstrip("_.-")
     title = title.lower()
+    # docker has some fucky-wucky undocumented restriction on not allowing multiple separators in a row. this is (mostly) the same regex as docker engine uses, and it just collapses multiple separators into one
+    title = re.sub(r"([._]|__|[-]+){2,}", lambda m: m.group(1), title)
 
     if container_name:
         container_name = container_name.replace(" ", "_")
         container_name = re.sub(r"[^A-Za-z0-9_.-]", "", container_name)
         container_name = container_name.lstrip("_.-")
         container_name = container_name.lower()
+        container_name = re.sub(
+            r"([._]|__|[-]+){2,}", lambda m: m.group(1), container_name
+        )
 
         return "_".join([title[:32], container_name[:16], digest[:16]])
 
