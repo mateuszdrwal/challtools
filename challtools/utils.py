@@ -449,15 +449,12 @@ def build_chall(config):
 
         client = get_docker_client()
 
-    if "build_script" in config["custom"] or config["deployment"]:
-        flag = get_first_text_flag(config)
-        if flag:
-            print(f"{BOLD}Flag: {flag}{CLEAR}")
-
     if "build_script" in config["custom"]:
         print(f"{BOLD}Running build script...{CLEAR}")
 
         did_something = True
+
+        flag = get_first_text_flag(config)
 
         p = subprocess.Popen(
             [Path(config["custom"]["build_script"]).absolute(), flag],
