@@ -97,6 +97,12 @@ def main(passed_args=None):
     compose_parser = subparsers.add_parser(
         "compose", description=compose_desc, help=compose_desc
     )
+    compose_parser.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        help="Write a single docker-compose.yml for all challenges in the CTF",
+    )
     compose_parser.set_defaults(func=compose)
 
     ensureid_desc = (
@@ -344,82 +350,110 @@ def solve(args):  # TODO add support for solve script
 
 
 def compose(args):
-    config = get_valid_config()
+    if args.all:
+        configs = [(path, get_valid_config(path)) for path in discover_challenges()]
+    else:
+        # TODO this whole function breaks when you are not at the ctf or challenge root, fix that
+        configs = [(Path("."), get_valid_config())]
 
-    if not config["deployment"] or not config["deployment"].get("containers"):
-        print(f"{BOLD}No services defined, nothing to do{CLEAR}")
-        return 0
-
-    if config["deployment"]["type"] != "docker":
-        raise CriticalException(
-            'Only deployments of type "docker" can be used to create a docker-compose file'
-        )
-
-    compose = {
-        "version": "3",
-        "services": {},
-    }
-
-    if config["deployment"]["volumes"]:
-        compose["volumes"] = {volume: {} for volume in config["deployment"]["volumes"]}
-    if config["deployment"]["networks"]:
-        compose["networks"] = {
-            network: {} for network in config["deployment"]["networks"]
-        }
-
+    compose = {"version": "3", "services": {}, "volumes": {}, "networks": {}}
     next_port = 50000
     used_ports = set()
 
-    # TODO handle services with set external ports first so the auto assigned ports dont potentially conflict with them
-    for name, container in config["deployment"]["containers"].items():
-        compose_service = {"ports": []}
-        volumes = []
-        networks = []
+    for path, config in configs:
+        if not config["deployment"]:
+            continue
 
-        if Path(container["image"]).exists():
-            compose_service["build"] = container["image"]
-        else:
-            compose_service["image"] = container["image"]
-
-        for service in container["services"]:
-            external_port = service.get("external_port")
-            if not external_port:
-                while next_port in used_ports:
-                    next_port += 1
-                external_port = next_port
-
-            assert external_port not in used_ports
-            used_ports.add(external_port)
-
-            compose_service["ports"].append(
-                f"{external_port}:{service['internal_port']}"
+        if config["deployment"]["type"] != "docker":
+            raise CriticalException(
+                'Only deployments of type "docker" can be used to create a docker-compose file'
             )
 
-        for service in container["extra_exposed_ports"]:
-            assert service["external_port"] not in used_ports
-            used_ports.add(service["external_port"])
-            compose_service["ports"].append(
-                f"{service['external_port']}:{service['internal_port']}"
-            )
+        if config["deployment"]["volumes"]:
+            compose["volumes"] = {
+                **compose["volumes"],
+                **{volume: {} for volume in config["deployment"]["volumes"]},
+            }
+        if config["deployment"]["networks"]:
+            compose["networks"] = {
+                **compose["networks"],
+                **{network: {} for network in config["deployment"]["networks"]},
+            }
 
-        for volume_name, containers in config["deployment"]["volumes"].items():
-            for mapping in containers:
-                if name in mapping:
-                    volumes.append(f"{volume_name}:{mapping[name]}")
+        # TODO handle services with set external ports first so the auto assigned ports dont potentially conflict with them
+        for name, container in config["deployment"]["containers"].items():
+            compose_service = {"ports": []}
+            volumes = []
+            networks = []
 
-        for network_name, containers in config["deployment"]["networks"].items():
-            if name in containers:
-                networks.append(network_name)
+            if args.all:
+                image_path = str(
+                    (path.parent / container["image"]).relative_to(Path().absolute())
+                )
+            else:
+                image_path = container["image"]
+            if Path(image_path).exists():
+                compose_service["build"] = image_path
+            else:
+                compose_service["image"] = container["image"]
 
-        if volumes:
-            compose_service["volumes"] = volumes
-        if networks:
-            compose_service["networks"] = networks
+            for service in container["services"]:
+                external_port = service.get("external_port")
+                if not external_port:
+                    while next_port in used_ports:
+                        next_port += 1
+                    external_port = next_port
 
-        if container["privileged"]:
-            compose_service["privileged"] = True
+                assert external_port not in used_ports
+                used_ports.add(external_port)
 
-        compose["services"][name] = compose_service
+                compose_service["ports"].append(
+                    f"{external_port}:{service['internal_port']}"
+                )
+
+            for service in container["extra_exposed_ports"]:
+                assert service["external_port"] not in used_ports
+                used_ports.add(service["external_port"])
+                compose_service["ports"].append(
+                    f"{service['external_port']}:{service['internal_port']}"
+                )
+
+            for volume_name, containers in config["deployment"]["volumes"].items():
+                for mapping in containers:
+                    if name in mapping:
+                        volumes.append(f"{volume_name}:{mapping[name]}")
+
+            for network_name, containers in config["deployment"]["networks"].items():
+                if name in containers:
+                    networks.append(network_name)
+
+            if volumes:
+                compose_service["volumes"] = volumes
+            if networks:
+                compose_service["networks"] = networks
+
+            if container["privileged"]:
+                compose_service["privileged"] = True
+
+            if args.all:
+                compose["services"][
+                    create_docker_name(
+                        config["title"],
+                        container_name=name,
+                        chall_id=config["challenge_id"],
+                    )
+                ] = compose_service
+            else:
+                compose["services"][name] = compose_service
+
+    if not compose["services"]:
+        print(f"{BOLD}No services defined, nothing to do{CLEAR}")
+        return 0
+
+    if not compose["volumes"]:
+        del compose["volumes"]
+    if not compose["networks"]:
+        del compose["networks"]
 
     Path("docker-compose.yml").write_text(yaml.dump(compose))
 
