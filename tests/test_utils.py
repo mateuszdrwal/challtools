@@ -202,7 +202,7 @@ class Test_format_user_service:
                     "custom_service_types": [
                         {
                             "type": "htjp",
-                            "user_display": "htjp://{host}:{port}",
+                            "display": "htjp://{host}:{port}",
                         }
                     ]
                 },

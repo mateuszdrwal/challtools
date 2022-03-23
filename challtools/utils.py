@@ -320,7 +320,7 @@ def create_docker_name(title, container_name=None, chall_id=None):
 
 
 def format_user_service(config, service_type, **kwargs):
-    """Formats a string displayed to the user based on the service type and a substitution context (``user_display`` in the OpenChallSpec).
+    """Formats a string displayed to the user based on the service type and a substitution context (``display`` in the OpenChallSpec).
 
     Args:
         config (dict): The normalized challenge config
@@ -331,14 +331,14 @@ def format_user_service(config, service_type, **kwargs):
         string: A formatted string ready to be presented to a CTF player
     """
     service_types = [
-        {"type": "website", "user_display": "{url}"},
-        {"type": "tcp", "user_display": "nc {host} {port}"},
+        {"type": "website", "display": "{url}"},
+        {"type": "tcp", "display": "nc {host} {port}"},
     ] + config["custom_service_types"]
     type_candidate = [i for i in service_types if i["type"] == service_type]
 
     if not type_candidate:
         raise ValueError(f"Unknown service type {service_type}")
-    string = type_candidate[0]["user_display"]
+    string = type_candidate[0]["display"]
 
     for name, value in kwargs.items():
         string = string.replace("{" + name + "}", value)

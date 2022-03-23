@@ -667,8 +667,8 @@ def push(args):
     service_types = {
         s["type"]: s
         for s in [
-            {"type": "website", "user_display": "{url}", "hyperlink": True},
-            {"type": "tcp", "user_display": "nc {host} {port}", "hyperlink": False},
+            {"type": "website", "display": "{url}", "hyperlink": True},
+            {"type": "tcp", "display": "nc {host} {port}", "hyperlink": False},
         ]
         + config["custom_service_types"]
     }
