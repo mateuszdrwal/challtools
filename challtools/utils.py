@@ -75,14 +75,14 @@ def process_messages(messages, verbose=False):
     }
 
 
-def get_ctf_config_path():
+def get_ctf_config_path(search_start=Path(".")):
     """Locates the global CTF configuration file (ctf.yml) and returns a path to it.
 
     Returns:
         pathlib.Path: The path to the config
         None: If there was no CTF config
     """
-    p = Path(".").absolute()
+    p = search_start.absolute()
 
     for directory in [p, *p.parents]:
         if (directory / "ctf.yml").exists():
@@ -199,14 +199,16 @@ def get_valid_config(workdir=None, search=True, cd=True):
     return validator.normalized_config
 
 
-def discover_challenges():
+def discover_challenges(search_start=None):
     """Discovers all challenges at the same level as or in a subdirectory below the CTF configuration file.
 
     Returns:
         list: A list of pathlib.Path objects to all found challenge configurations
         None: If there was no CTF config
     """
-    root = get_ctf_config_path().parent
+    root = get_ctf_config_path(
+        **{"search_start": search_start} if search_start else {}
+    ).parent
 
     if not root:
         return None
@@ -275,6 +277,24 @@ def get_first_text_flag(config):
     return config["flag_format_prefix"] + text_flag + config["flag_format_suffix"]
 
 
+def dockerize_string(string):
+    """Converts a string into a valid docker tag name.
+
+    Args:
+        string (string): The string to transform
+
+    Returns:
+        string: A valid docker tag name.
+    """
+    string = string.replace(" ", "_")
+    string = re.sub(r"[^A-Za-z0-9_.-]", "", string)
+    string = string.lstrip("_.-")
+    string = string.lower()
+    # docker has some fucky-wucky undocumented restriction on not allowing multiple separators in a row. this is (mostly) the same regex as docker engine uses, and it just collapses multiple separators into one
+    string = re.sub(r"([._]|__|[-]+){2,}", lambda m: m.group(1), string)
+    return string[:128]
+
+
 def create_docker_name(title, container_name=None, chall_id=None):
     """Converts challenge information into a most likely unique and valid docker tag name.
 
@@ -290,22 +310,10 @@ def create_docker_name(title, container_name=None, chall_id=None):
         (title + "|" + (container_name or "") + "|" + (chall_id or "")).encode()
     ).hexdigest()
 
-    title = title.replace(" ", "_")
-    title = re.sub(r"[^A-Za-z0-9_.-]", "", title)
-    title = title.lstrip("_.-")
-    title = title.lower()
-    # docker has some fucky-wucky undocumented restriction on not allowing multiple separators in a row. this is (mostly) the same regex as docker engine uses, and it just collapses multiple separators into one
-    title = re.sub(r"([._]|__|[-]+){2,}", lambda m: m.group(1), title)
+    title = dockerize_string(title)
 
     if container_name:
-        container_name = container_name.replace(" ", "_")
-        container_name = re.sub(r"[^A-Za-z0-9_.-]", "", container_name)
-        container_name = container_name.lstrip("_.-")
-        container_name = container_name.lower()
-        container_name = re.sub(
-            r"([._]|__|[-]+){2,}", lambda m: m.group(1), container_name
-        )
-
+        container_name = dockerize_string(container_name)
         return "_".join([title[:32], container_name[:16], digest[:16]])
 
     return "_".join([title[:32], digest[:16]])
