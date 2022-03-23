@@ -6,6 +6,7 @@ import os
 import uuid
 import hashlib
 import shutil
+import urllib.parse
 from pathlib import Path
 import pkg_resources
 import requests
@@ -21,6 +22,8 @@ from .utils import (
     get_ctf_config_path,
     get_valid_config,
     discover_challenges,
+    get_docker_client,
+    create_docker_name,
     build_chall,
     start_chall,
     start_solution,
@@ -115,6 +118,21 @@ def main(passed_args=None):
 
     push_desc = "Push a challenge to the ctf platform"
     push_parser = subparsers.add_parser("push", description=push_desc, help=push_desc)
+    push_parser.add_argument(
+        "--skip-files",
+        action="store_true",
+        help="Do not upload downloadable files anywhere",
+    )
+    push_parser.add_argument(
+        "--skip-build",
+        action="store_true",
+        help="Do not build the challenge before pushing",
+    )
+    push_parser.add_argument(
+        "--skip-containers",
+        action="store_true",
+        help="Do not push containers to any registry",
+    )
     push_parser.set_defaults(func=push)
 
     init_desc = "Initialize a directory with template challenge files"
@@ -545,53 +563,106 @@ def push(args):
             "Platform API key not configured in the CTF configuration file"
         )
 
-    try:
-        from google.cloud import storage
-    except ImportError:
-        raise CriticalException("google-cloud-storage is not installed!")
-
     file_urls = []
 
-    if not config["downloadable_files"]:
-        print(f"{BOLD}No files defined, nothing to upload{CLEAR}")
-    else:
+    if not args.skip_build:
+        if build_chall(config):
+            print(f"{BOLD}Challenge built{CLEAR}")
+        else:
+            print(f"{BOLD}Nothing to build{CLEAR}")
 
-        if not ctf_config.get("custom", {}).get("bucket"):
+    if not args.skip_files:
+        try:
+            from google.cloud import storage
+        except ImportError:
+            raise CriticalException("google-cloud-storage is not installed!")
+
+        if not config["downloadable_files"]:
+            print(f"{BOLD}No files defined, nothing to upload{CLEAR}")
+        else:
+
+            if not ctf_config.get("custom", {}).get("bucket"):
+                raise CriticalException(
+                    "Bucket not configured in the CTF configuration file"
+                )
+
+            if not ctf_config.get("custom", {}).get("secret"):
+                raise CriticalException(
+                    "Secret not configured in the CTF configuration file"
+                )
+
+            storage_client = storage.Client()
+            bucket = storage_client.bucket(ctf_config["custom"]["bucket"])
+            folder = hashlib.sha256(
+                f"{ctf_config['custom']['secret']}-{config['challenge_id']}".encode()
+            ).hexdigest()
+
+            for blob in bucket.list_blobs(prefix=folder):
+                print(f"{BOLD}Deleting old {blob.name.split('/')[-1]}...{CLEAR}")
+                blob.delete()
+
+            filepaths = []
+            for file in config["downloadable_files"]:
+                path = Path(file)
+                if path.is_dir():
+                    filepaths += list(path.iterdir())
+                else:
+                    filepaths.append(path)
+
+            for path in filepaths:
+                if not path.exists():
+                    print(f"{CRITICAL}file {path} does not exist!{CLEAR}")
+
+                print(f"{BOLD}Uploading {path.name}...{CLEAR}")
+                blob = bucket.blob(folder + "/" + path.name)
+                blob.upload_from_file(path.open("rb"))
+                file_urls.append(blob.public_url)
+
+    if not args.skip_containers and config["deployment"]:
+        try:
+            import google.auth
+            import google.auth.transport.requests
+        except ImportError:
+            raise CriticalException("google.auth could not be imported!")
+
+        if not ctf_config.get("custom", {}).get("container_registry"):
             raise CriticalException(
-                "Bucket not configured in the CTF configuration file"
+                "Docker registry has not been configured in the CTF configuration file"
             )
 
-        if not ctf_config.get("custom", {}).get("secret"):
-            raise CriticalException(
-                "Secret not configured in the CTF configuration file"
+        print(f"{BOLD}Authenticating with registry...{CLEAR}")
+
+        creds, project = google.auth.default(
+            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        )
+        auth_req = google.auth.transport.requests.Request()
+        creds.refresh(auth_req)
+        if not creds.valid:
+            raise CriticalException("Could not authenticate with GCP")
+
+        client = get_docker_client()
+        r = client.login(
+            "oauth2accesstoken",
+            creds.token,
+            registry=ctf_config["custom"]["container_registry"],
+            reauth=True,
+        )
+        if not r.get("Status", "") == "Login Succeeded":
+            raise CriticalException("Could not login with docker")
+
+        for container_name, _ in config["deployment"]["containers"].items():
+            container_name = create_docker_name(
+                config["title"],
+                container_name=container_name,
+                chall_id=config["challenge_id"],
+            )
+            repo_container_name = urllib.parse.urljoin(
+                ctf_config["custom"]["container_registry"], container_name
             )
 
-        storage_client = storage.Client()
-        bucket = storage_client.bucket(ctf_config["custom"]["bucket"])
-        folder = hashlib.sha256(
-            f"{ctf_config['custom']['secret']}-{config['challenge_id']}".encode()
-        ).hexdigest()
-
-        for blob in bucket.list_blobs(prefix=folder):
-            print(f"{BOLD}Deleting old {blob.name.split('/')[-1]}...{CLEAR}")
-            blob.delete()
-
-        filepaths = []
-        for file in config["downloadable_files"]:
-            path = Path(file)
-            if path.is_dir():
-                filepaths += list(path.iterdir())
-            else:
-                filepaths.append(path)
-
-        for path in filepaths:
-            if not path.exists():
-                print(f"{CRITICAL}file {path} does not exist!{CLEAR}")
-
-            print(f"{BOLD}Uploading {path.name}...{CLEAR}")
-            blob = bucket.blob(folder + "/" + path.name)
-            blob.upload_from_file(path.open("rb"))
-            file_urls.append(blob.public_url)
+            print(f"{BOLD}Pushing container {container_name}...{CLEAR}")
+            client.images.get(container_name).tag(repo_container_name)
+            a = client.images.push(repo_container_name)
 
     service_types = {
         s["type"]: s
@@ -622,6 +693,8 @@ def push(args):
             for c in config["predefined_services"]
         ],
     }
+
+    print(f"{BOLD}Pushing to platform...{CLEAR}")
 
     r = requests.post(
         ctf_config["custom"]["platform_url"] + "/api/admin/push_challenge",
