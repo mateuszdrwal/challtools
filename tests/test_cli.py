@@ -55,6 +55,15 @@ class Test_build:
         ]
 
     @pytest.mark.fails_without_docker
+    def test_subdir(self, tmp_path, docker_client, clean_container_state):
+        populate_dir(tmp_path, "trivial_tcp")
+        os.chdir("container")
+        assert main_wrapper(["build"]) == 0
+        assert "challtools_test_challenge_f9629917705648c9:latest" in [
+            tag for image in docker_client.images.list() for tag in image.tags
+        ]
+
+    @pytest.mark.fails_without_docker
     def test_solution(self, tmp_path, docker_client, clean_container_state):
         populate_dir(tmp_path, "trivial_tcp_solution")
         assert main_wrapper(["build"]) == 0

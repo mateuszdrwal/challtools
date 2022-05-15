@@ -93,6 +93,24 @@ def get_ctf_config_path(search_start=Path(".")):
     return None
 
 
+def get_config_path(search_start=Path(".")):
+    """Locates the challenge configuration file (challenge.yml) and returns a path to it.
+
+    Returns:
+        pathlib.Path: The path to the config
+        None: If there was no challenge config
+    """
+    p = search_start.absolute()
+
+    for directory in [p, *p.parents]:
+        if (directory / "challenge.yml").exists():
+            return directory / "challenge.yml"
+        if (directory / "challenge.yaml").exists():
+            return directory / "challenge.yaml"
+
+    return None
+
+
 def load_ctf_config():
     """Loads the global CTF configuration file (ctf.yml) from the current or a parent directory.
 
@@ -128,15 +146,16 @@ def load_config(workdir=".", search=True, cd=True):
 
     workdir = Path(workdir).absolute()
 
-    for directory in [workdir, *(workdir.parents if search else [])]:
-        path = Path(directory)
+    if search:
+        path = get_config_path(workdir)
+    else:
+        path = None
         if (path / "challenge.yml").exists():
             path = path / "challenge.yml"
-            break
         elif (path / "challenge.yaml").exists():
             path = path / "challenge.yaml"
-            break
-    else:
+
+    if not path:
         raise CriticalException(
             f"Could not find a challenge.yml file in this{' or a parent' if search else ''} directory."
         )
@@ -145,7 +164,7 @@ def load_config(workdir=".", search=True, cd=True):
     config = yaml.safe_load(raw_config)
 
     if cd:
-        path.parent.cwd()
+        os.chdir(path.parent)
 
     return config
 
@@ -435,6 +454,60 @@ def build_image(image, tag, client):
         )
 
 
+def run_build_script(config):
+    if "build_script" not in config["custom"]:
+        raise CriticalException(f"Build script has not been defined!")
+
+    print(f"{BOLD}Running build script...{CLEAR}")
+
+    flag = get_first_text_flag(config)
+
+    p = subprocess.Popen(
+        [Path(config["custom"]["build_script"]).absolute(), flag],
+        stdout=sys.stdout,
+        stderr=sys.stdout,
+    )
+    p.wait()
+
+    if p.returncode != 0:
+        raise CriticalException(f"Build script exited with code {p.returncode}")
+
+
+def build_docker_images(config, client):
+    if not config["deployment"]:
+        return False
+
+    for container_name, container in config["deployment"]["containers"].items():
+        print(f"{BOLD}Processing container {container_name}...{CLEAR}")
+        build_image(
+            container["image"],
+            create_docker_name(
+                config["title"],
+                container_name=container_name,
+                chall_id=config["challenge_id"],
+            ),
+            client,
+        )
+
+    network_list = [network.name for network in client.networks.list()]
+    for network_name in config["deployment"]["networks"]:
+        if network_name not in network_list:
+            print(f"{BOLD}Creating network {network_name}...{CLEAR}")
+            client.networks.create(
+                network_name
+            )  # TODO make network names not collide between challenges, add id hash maybe
+
+    volume_list = [volume.name for volume in client.volumes.list()]
+    for volume_name in config["deployment"]["volumes"]:
+        if volume_name not in volume_list:
+            print(f"{BOLD}Creating volume {volume_name}...{CLEAR}")
+            client.volumes.create(
+                volume_name
+            )  # TODO make volume names not collide between challenges, add id hash maybe
+
+    return True
+
+
 def build_chall(config):
     """Builds a challenge including running the build script and building service and solution docker images. Expects to be run from the root directory of the challenge.
 
@@ -458,51 +531,12 @@ def build_chall(config):
         client = get_docker_client()
 
     if "build_script" in config["custom"]:
-        print(f"{BOLD}Running build script...{CLEAR}")
-
         did_something = True
-
-        flag = get_first_text_flag(config)
-
-        p = subprocess.Popen(
-            [Path(config["custom"]["build_script"]).absolute(), flag],
-            stdout=sys.stdout,
-            stderr=sys.stdout,
-        )
-        p.wait()
-
-        if p.returncode != 0:
-            raise CriticalException(f"Build script exited with code {p.returncode}")
+        run_build_script(config)
 
     if config["deployment"]:
         did_something = True
-        for container_name, container in config["deployment"]["containers"].items():
-            print(f"{BOLD}Processing container {container_name}...{CLEAR}")
-            build_image(
-                container["image"],
-                create_docker_name(
-                    config["title"],
-                    container_name=container_name,
-                    chall_id=config["challenge_id"],
-                ),
-                client,
-            )
-
-        network_list = [network.name for network in client.networks.list()]
-        for network_name in config["deployment"]["networks"]:
-            if network_name not in network_list:
-                print(f"{BOLD}Creating network {network_name}...{CLEAR}")
-                client.networks.create(
-                    network_name
-                )  # TODO make network names not collide between challenges, add id hash maybe
-
-        volume_list = [volume.name for volume in client.volumes.list()]
-        for volume_name in config["deployment"]["volumes"]:
-            if volume_name not in volume_list:
-                print(f"{BOLD}Creating volume {volume_name}...{CLEAR}")
-                client.volumes.create(
-                    volume_name
-                )  # TODO make volume names not collide between challenges, add id hash maybe
+        build_docker_images(config, client)
 
     if config["solution_image"]:
         did_something = True
@@ -690,6 +724,106 @@ def start_solution(config):
     container.start()
 
     return container
+
+
+def generate_compose(configs, is_global=False):
+    # TODO this whole functions paths are broken, there should be a path argument to generate paths relative to and `is_global` shouldn't exist
+    compose = {"version": "3", "services": {}, "volumes": {}, "networks": {}}
+    next_port = 50000
+    used_ports = set()
+
+    for path, config in configs:
+        if not config["deployment"]:
+            continue
+
+        if config["deployment"]["type"] != "docker":
+            raise CriticalException(
+                'Only deployments of type "docker" can be used to create a docker-compose file'
+            )
+
+        if config["deployment"]["volumes"]:
+            compose["volumes"] = {
+                **compose["volumes"],
+                **{volume: {} for volume in config["deployment"]["volumes"]},
+            }
+        if config["deployment"]["networks"]:
+            compose["networks"] = {
+                **compose["networks"],
+                **{network: {} for network in config["deployment"]["networks"]},
+            }
+
+        # TODO handle services with set external ports first so the auto assigned ports dont potentially conflict with them
+        for name, container in config["deployment"]["containers"].items():
+            compose_service = {"ports": []}
+            volumes = []
+            networks = []
+
+            if is_global:
+                image_path = str(
+                    (path.parent / container["image"]).relative_to(Path().absolute())
+                )
+            else:
+                image_path = container["image"]
+            if Path(image_path).exists():
+                compose_service["build"] = image_path
+            else:
+                compose_service["image"] = container["image"]
+
+            for service in container["services"]:
+                external_port = service.get("external_port")
+                if not external_port:
+                    while next_port in used_ports:
+                        next_port += 1
+                    external_port = next_port
+
+                assert external_port not in used_ports
+                used_ports.add(external_port)
+
+                compose_service["ports"].append(
+                    f"{external_port}:{service['internal_port']}"
+                )
+
+            for service in container["extra_exposed_ports"]:
+                assert service["external_port"] not in used_ports
+                used_ports.add(service["external_port"])
+                compose_service["ports"].append(
+                    f"{service['external_port']}:{service['internal_port']}"
+                )
+
+            for volume_name, containers in config["deployment"]["volumes"].items():
+                for mapping in containers:
+                    if name in mapping:
+                        volumes.append(f"{volume_name}:{mapping[name]}")
+
+            for network_name, containers in config["deployment"]["networks"].items():
+                if name in containers:
+                    networks.append(network_name)
+
+            if volumes:
+                compose_service["volumes"] = volumes
+            if networks:
+                compose_service["networks"] = networks
+
+            if container["privileged"]:
+                compose_service["privileged"] = True
+
+            if is_global:
+                compose["services"][
+                    create_docker_name(
+                        config["title"],
+                        container_name=name,
+                        chall_id=config["challenge_id"],
+                    )
+                ] = compose_service
+            else:
+                compose["services"][name] = compose_service
+
+    if not compose["volumes"]:
+        del compose["volumes"]
+    if not compose["networks"]:
+        del compose["networks"]
+
+    return compose
 
 
 # https://stackoverflow.com/a/12514470
