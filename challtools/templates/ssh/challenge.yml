@@ -1,0 +1,25 @@
+title: Default title
+description: Default description
+authors:
+  - Default Author
+categories:
+  - Default Category
+
+# set the flag_format_prefix to `null` to not use the flag format
+flag_format_prefix: __FLAG_FORMAT_PREFIX__
+flags: d3f4ul7_fl46
+
+custom_service_types:
+  - type: ssh
+    display: ssh ctf@{host} -p {port}
+
+service:
+  type: ssh
+  image: container
+  internal_port: 22
+
+# downloadable_files:
+#   - container/service
+
+challenge_id: __ID__
+spec: 0.0.1
