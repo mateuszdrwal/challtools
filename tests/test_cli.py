@@ -189,6 +189,6 @@ class Test_init:
     def test_list(self, capsys):
         assert main_wrapper(["init", "--list"]) == 0
         assert (
-            "default - A generic template suitable for any type of challenge"
+            "default - a generic template suitable for any type of challenge"
             in capsys.readouterr().out.lower()
         )
