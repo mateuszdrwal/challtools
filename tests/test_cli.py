@@ -172,16 +172,24 @@ class Test_init:
         assert "initialized" in capsys.readouterr().out.lower()
         assert self.check_identical(tmp_path, "default")
 
-    def test_nonempty(self, tmp_path, capsys):
+    def test_nonempty(self, tmp_path):
         os.chdir(tmp_path)
         Path("existing_file").touch()
         assert main_wrapper(["init", "default"]) == 1
         assert not self.check_identical(tmp_path, "default")
 
-    def test_force(self, tmp_path, capsys):
+    def test_force(self, tmp_path):
         os.chdir(tmp_path)
         Path("existing_file").touch()
         assert main_wrapper(["init", "default", "-f"]) == 0
         assert not self.check_identical(tmp_path, "default")
         Path("existing_file").unlink()
         assert self.check_identical(tmp_path, "default")
+
+    def test_list(self, capsys):
+        assert main_wrapper(["init", "--list"]) == 0
+        assert self.check_identical(tmp_path, "default")
+        assert (
+            "default - A generic template suitable for any type of challenge"
+            in capsys.readouterr().out.lower()
+        )
