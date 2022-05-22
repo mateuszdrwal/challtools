@@ -472,7 +472,7 @@ def push(args):
             "Platform API key not configured in the CTF configuration file"
         )
 
-    file_urls = []
+    file_urls = [file for file in config["downloadable_files"] if is_url(file)]
 
     if not args.skip_container_build and not args.skip_container_push:
         if build_docker_images(config, get_docker_client()):
@@ -512,6 +512,9 @@ def push(args):
 
             filepaths = []
             for file in config["downloadable_files"]:
+                if is_url(file):
+                    continue
+
                 path = Path(file)
                 if path.is_dir():
                     filepaths += list(path.iterdir())
@@ -520,7 +523,7 @@ def push(args):
 
             for path in filepaths:
                 if not path.exists():
-                    print(f"{CRITICAL}file {path} does not exist!{CLEAR}")
+                    raise CriticalException(f"file {path} does not exist!")
 
                 print(f"{BOLD}Uploading {path.name}...{CLEAR}")
                 blob = bucket.blob(folder + "/" + path.name)

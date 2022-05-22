@@ -12,8 +12,8 @@ A002:
 A003:
   name: Downloadable file missing
   level: 4
-  formatted_message: "The file {file} is configured as a downloadable file however it does not exist on the filesystem."
-  docs_message: A file configured as a downloadable file does not exist on the filesystem.
+  formatted_message: "The file {file} is configured as a downloadable file however it does not exist on the filesystem, and is not recognized as an URL."
+  docs_message: A file configured as a downloadable file does not exist on the filesystem and is not recognized as an URL.
 A004:
   name: Challenge ID missing
   level: 3

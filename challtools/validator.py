@@ -13,6 +13,10 @@ with pkg_resources.resource_stream("challtools", "challenge.schema.json") as f:
     schema = json.load(f)
 
 
+def is_url(s):
+    return s.startswith("http://") or s.startswith("https://")
+
+
 def extend_with_default(validator_class):
     validate_properties = validator_class.VALIDATORS["properties"]
 
@@ -165,7 +169,7 @@ class ConfigValidator:
         # A003
         if self.challdir:
             for file in self.normalized_config["downloadable_files"]:
-                if not (self.challdir / Path(file)).exists():
+                if not (self.challdir / Path(file)).exists() and not is_url(file):
                     self._raise_code("A003", "downloadable_files", file=file)
 
         # A004
