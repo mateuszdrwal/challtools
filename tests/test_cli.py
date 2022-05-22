@@ -188,7 +188,6 @@ class Test_init:
 
     def test_list(self, capsys):
         assert main_wrapper(["init", "--list"]) == 0
-        assert self.check_identical(tmp_path, "default")
         assert (
             "default - A generic template suitable for any type of challenge"
             in capsys.readouterr().out.lower()
