@@ -144,16 +144,17 @@ def load_config(workdir=".", search=True, cd=True):
         CriticalException: If the challenge configuration cannot be found
     """
 
-    workdir = Path(workdir).absolute()
+    path = Path(workdir).absolute()
 
     if search:
-        path = get_config_path(workdir)
+        path = get_config_path(path)
     else:
-        path = None
         if (path / "challenge.yml").exists():
             path = path / "challenge.yml"
         elif (path / "challenge.yaml").exists():
             path = path / "challenge.yaml"
+        else:
+            path = None
 
     if not path:
         raise CriticalException(
