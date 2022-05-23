@@ -6,20 +6,20 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, Any, Optional, Union, List
+from typing import Dict, Any, Optional, Union, List, Tuple
 
 import docker
 import requests
 import yaml
 
 from .constants import *
-from .validator import ConfigValidator
+from .validator import ConfigValidator, Message
 
 class CriticalException(Exception):
     pass
 
 
-def process_messages(messages: List[str], verbose: bool = False) -> Dict[str, Any]:
+def process_messages(messages: List[Message], verbose: bool = False) -> Dict[str, Any]:
     """Processes a list of messages from validator.ConfigValidator.validate for printing.
 
     Args:
@@ -39,17 +39,17 @@ def process_messages(messages: List[str], verbose: bool = False) -> Dict[str, An
     highest_level = 0
     message_strings = []
     for message in messages:
-        level_counts[message["level"] - 1] += 1
-        highest_level = max(highest_level, message["level"])
+        level_counts[message.level - 1] += 1
+        highest_level = max(highest_level, message.level)
 
         message_string = (
-            f"[{STYLED_LEVELS[message['level']-1]}] [{BOLD}{message['code']}{CLEAR}] "
+            f"[{STYLED_LEVELS[message.level-1]}] [{BOLD}{message.code}{CLEAR}] "
         )
-        if message["field"]:
-            message_string += f"{message['field']}: "
-        message_string += message["name"]
+        if message.field:
+            message_string += f"{message.field}: "
+        message_string += message.name
         if verbose:
-            message_string += "\n" + message["message"]
+            message_string += "\n" + message.message
         message_strings.append(message_string)
 
     level_name_counts = {i: count for i, count in enumerate(level_counts) if count}
@@ -95,7 +95,7 @@ def get_ctf_config_path(search_start: Path = Path(".")) -> Optional[Path]:
     return None
 
 
-def get_config_path(search_start: Path = Path(".")) -> Path:
+def get_config_path(search_start: Path = Path(".")) -> Optional[Path]:
     """Locates the challenge configuration file (challenge.yml) and returns a path to it.
 
     Returns:
@@ -146,10 +146,10 @@ def load_config(workdir: str = ".", search: bool = True, cd: bool = True) -> Dic
         CriticalException: If the challenge configuration cannot be found
     """
 
-    path = Path(workdir).absolute()
+    workdir_path = Path(workdir).absolute()
 
     if search:
-        path = get_config_path(path)
+        path = get_config_path(workdir_path)
     else:
         if (path / "challenge.yml").exists():
             path = path / "challenge.yml"
@@ -174,7 +174,7 @@ def load_config(workdir: str = ".", search: bool = True, cd: bool = True) -> Dic
     return config
 
 
-def get_valid_config(workdir: Union[str, Path] = None, search: bool = True, cd: bool = True) -> Any:
+def get_valid_config(workdir: Optional[Union[str, Path]] = None, search: bool = True, cd: bool = True) -> Any:
     """Loads the challenge configuration file from the current directory and makes sure its valid.
 
     Args:
@@ -199,7 +199,7 @@ def get_valid_config(workdir: Union[str, Path] = None, search: bool = True, cd: 
     if highest_level == 5:
         print(
             "\n".join(
-                process_messages([m for m in messages if m["level"] == 5])[
+                process_messages([m for m in messages if m.level == 5])[
                     "message_strings"
                 ]
             )
@@ -211,7 +211,7 @@ def get_valid_config(workdir: Union[str, Path] = None, search: bool = True, cd: 
     elif highest_level == 4:
         print(
             "\n".join(
-                process_messages([m for m in messages if m["level"] == 4])[
+                process_messages([m for m in messages if m.level == 4])[
                     "message_strings"
                 ]
             )
@@ -223,21 +223,19 @@ def get_valid_config(workdir: Union[str, Path] = None, search: bool = True, cd: 
     return validator.normalized_config
 
 
-def discover_challenges(search_start: bool = None) -> List[Path]:
+def discover_challenges(search_start: Optional[bool] = None) -> List[Path]:
     """Discovers all challenges at the same level as or in a subdirectory below the CTF configuration file.
 
     Returns:
         list: A list of pathlib.Path objects to all found challenge configurations
         None: If there was no CTF config
     """
-    root = get_ctf_config_path(
-        **{"search_start": search_start} if search_start else {}
-    ).parent
-
+    root = (get_ctf_config_path(search_start) if search_start else get_ctf_config_path())
     if not root:
         return None
+    root = root.parent
 
-    def checkdir(d):
+    def checkdir(d: Path) -> List[Path]:
         if (d / "challenge.yml").exists():
             return [d / "challenge.yml"]
         if (d / "challenge.yaml").exists():
@@ -319,7 +317,7 @@ def dockerize_string(string: str) -> str:
     return string[:128]
 
 
-def create_docker_name(title: str, container_name: str = None, chall_id=None) -> str:
+def create_docker_name(title: str, container_name: Optional[str] = None, chall_id: Optional[str] = None) -> str:
     """Converts challenge information into a most likely unique and valid docker tag name.
 
     Args:
@@ -515,7 +513,7 @@ def build_docker_images(config: Dict[str, Any], client: docker.api.client.Contai
     return True
 
 
-def build_chall(config):
+def build_chall(config: Dict[str, Any]) -> bool:
     """Builds a challenge including running the build script and building service and solution docker images. Expects to be run from the root directory of the challenge.
 
     Args:
@@ -558,7 +556,7 @@ def build_chall(config):
     return did_something
 
 
-def start_chall(config):
+def start_chall(config: Dict[str, Any]) -> Tuple[List[docker.api.client.ContainerApiMixin], List[str]]:
     """Starts all docker containers for this challenge.
 
     Args:
@@ -665,7 +663,7 @@ def start_chall(config):
     return containers, service_strings
 
 
-def start_solution(config):
+def start_solution(config: Dict[str, Any]) -> docker.api.client.ContainerApiMixin:
     """Starts a solution container for this challenge.
 
     Args:
@@ -761,7 +759,7 @@ def generate_compose(configs, is_global=False):
 
         # TODO handle services with set external ports first so the auto assigned ports dont potentially conflict with them
         for name, container in config["deployment"]["containers"].items():
-            compose_service = {"ports": []}
+            compose_service: Dict[str, Any] = {"ports": []}
             volumes = []
             networks = []
 

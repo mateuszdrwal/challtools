@@ -1,3 +1,5 @@
+from typing import Generator
+
 import docker
 import pytest
 
@@ -9,7 +11,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption("--docker-strict", action="store_true")
 
 
-def pytest_collection_modifyitems(session, config, items):
+def pytest_collection_modifyitems(session, config, items) -> None:
     for item in items:
         if config.option.docker_fails and "fails_without_docker" in set(
             marker.name for marker in item.own_markers
@@ -23,7 +25,7 @@ def docker_client() -> docker.api.client.ContainerApiMixin:
 
 
 @pytest.fixture()
-def clean_container_state(docker_client: docker.api.client.ContainerApiMixin):
+def clean_container_state(docker_client: docker.api.client.ContainerApiMixin) -> Generator[None, None, None]:
     relevant_tags = [
         "challtools_test",
         "challtools_test_challenge_f9629917705648c9",

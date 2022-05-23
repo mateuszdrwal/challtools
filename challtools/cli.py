@@ -9,6 +9,8 @@ import sys
 import time
 import urllib.parse
 import uuid
+from pathlib import Path
+from typing import List, Optional, Callable, Dict, Any
 
 import argcomplete
 import docker
@@ -17,7 +19,6 @@ import yaml
 import docker
 import argcomplete
 
-from pathlib import Path
 from .constants import *
 from .utils import (
     _copytree,
@@ -39,6 +40,11 @@ from .utils import (
     validate_solution_output,
 )
 from .validator import ConfigValidator, is_url
+
+class CliArguments(argparse.Namespace):
+    def __init__(self) -> None:
+        self.somearg: str
+        self.func: Callable
 
 
 def main(passed_args: Optional[List[str]] = None) -> int:
@@ -169,19 +175,20 @@ def main(passed_args: Optional[List[str]] = None) -> int:
 
     argcomplete.autocomplete(parser, always_complete_options=False)
 
-    args = parser.parse_args(passed_args)
+    args = parser.parse_args(passed_args, namespace=CliArguments)
 
     if not getattr(args, "func", None):
         parser.print_usage()
+        return 1
     else:
         try:
-            exit(args.func(args))
+            return args.func(args)
         except CriticalException as e:
             print(CRITICAL + e.args[0] + CLEAR)
-            exit(1)
+            return 1
 
 
-def allchalls(args):
+def allchalls(args: CliArguments) -> int:
     parser = args.subparsers.choices.get(args.command[0])
 
     if not parser:
@@ -214,7 +221,7 @@ def allchalls(args):
     return int(failed)
 
 
-def validate(args):
+def validate(args: CliArguments) -> int:
 
     config = load_config()
 
@@ -264,7 +271,7 @@ def validate(args):
     return 0
 
 
-def build(args):
+def build(args: CliArguments) -> int:
     config = get_valid_config()
 
     if build_chall(config):
@@ -275,7 +282,7 @@ def build(args):
     return 0
 
 
-def start(args):
+def start(args: CliArguments) -> int:
     config = get_valid_config()
 
     if args.build and build_chall(config):
@@ -326,7 +333,7 @@ def start(args):
     return 1
 
 
-def solve(args):  # TODO add support for solve script
+def solve(args: CliArguments) -> int:  # TODO add support for solve script
     config = get_valid_config()
 
     if not config["solution_image"]:
@@ -374,7 +381,7 @@ def solve(args):  # TODO add support for solve script
     return 0
 
 
-def compose(args):
+def compose(args: CliArguments) -> int:
     if args.all:
         configs = [
             (path, get_valid_config(path, cd=False)) for path in discover_challenges()
@@ -394,7 +401,7 @@ def compose(args):
     return 0
 
 
-def ensureid(args):
+def ensureid(args: CliArguments) -> int:
     path = Path(".")
     if (path / "challenge.yml").exists():
         path = path / "challenge.yml"
@@ -417,7 +424,7 @@ def ensureid(args):
     if highest_level == 5:
         print(
             "\n".join(
-                process_messages([m for m in messages if m["level"] == 5])[
+                process_messages([m for m in messages if m.level == 5])[
                     "message_strings"
                 ]
             )
@@ -461,7 +468,7 @@ def ensureid(args):
     return 0
 
 
-def push(args):
+def push(args: CliArguments) -> int:
     config = get_valid_config()
     ctf_config = load_ctf_config()
 
@@ -633,7 +640,7 @@ def push(args):
     return 0
 
 
-def init(args):
+def init(args: CliArguments) -> int:
 
     if args.list:
         for template_path in Path(
@@ -691,7 +698,7 @@ def init(args):
     return 0
 
 
-def templateCompleter(**kwargs):
+def templateCompleter(**kwargs: Dict[str, Any]) -> List[str]:
     return [
         path.name
         for path in Path(
@@ -700,7 +707,7 @@ def templateCompleter(**kwargs):
     ]
 
 
-def spoilerfree(args):
+def spoilerfree(args: CliArguments) -> int:
     config = get_valid_config()
 
     print(f"\033[1;97m{config['title']}{CLEAR}")

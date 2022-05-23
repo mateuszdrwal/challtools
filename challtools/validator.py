@@ -45,6 +45,15 @@ def extend_with_default(validator_class):
 DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
 
 
+class Message(object):
+    def __init__(self, code, field, name, level, message):
+        self.code = code
+        self.field = field
+        self.name = name
+        self.level = level
+        self.message = message
+
+
 class ConfigValidator:
     def __init__(self, config, ctf_config=None, challdir=None):
         if not isinstance(config, dict):
@@ -65,7 +74,7 @@ class ConfigValidator:
 
     #     return DefaultValidatingDraft7Validator(schema).validate(self.normalized_config)
 
-    def validate(self) -> Tuple[bool, List[Dict[str, Any]]]:
+    def validate(self) -> Tuple[bool, List[Message]]:
         """Validates the challenge config and returns a list of messages.
 
         Returns:
@@ -268,13 +277,13 @@ class ConfigValidator:
         # no valid field check because of A002
 
         self.messages.append(
-            {
-                "code": code,
-                "field": field,
-                "name": codes[code]["name"],
-                "level": codes[code]["level"],
-                "message": codes[code]["formatted_message"].format(
+            Message(
+                code=code,
+                field=field,
+                name=codes[code]["name"],
+                level=codes[code]["level"],
+                message=codes[code]["formatted_message"].format(
                     field_name=field, **formatting
                 ),
-            }
+            )
         )
