@@ -1,17 +1,17 @@
-import os
-import re
-import subprocess
-import sys
+import docker
 import hashlib
 import json
-import shutil
-from pathlib import Path
-import yaml
-import docker
+import os
+import re
 import requests
-from .validator import ConfigValidator
+import shutil
+import subprocess
+import sys
+import yaml
 from .constants import *
-
+from .validator import ConfigValidator
+from pathlib import Path
+from typing import Dict, Any, Optional, Union, List
 
 class CriticalException(Exception):
     pass
@@ -75,7 +75,7 @@ def process_messages(messages, verbose=False):
     }
 
 
-def get_ctf_config_path(search_start=Path(".")):
+def get_ctf_config_path(search_start=Path(".")) -> Optional[Path]:
     """Locates the global CTF configuration file (ctf.yml) and returns a path to it.
 
     Returns:
@@ -93,7 +93,7 @@ def get_ctf_config_path(search_start=Path(".")):
     return None
 
 
-def get_config_path(search_start=Path(".")):
+def get_config_path(search_start=Path(".")) -> Path:
     """Locates the challenge configuration file (challenge.yml) and returns a path to it.
 
     Returns:
@@ -111,7 +111,7 @@ def get_config_path(search_start=Path(".")):
     return None
 
 
-def load_ctf_config():
+def load_ctf_config() -> Dict[str, Any]:
     """Loads the global CTF configuration file (ctf.yml) from the current or a parent directory.
 
     Returns:
@@ -123,13 +123,13 @@ def load_ctf_config():
     if not ctfpath:
         return None
 
-    raw_config = ctfpath.read_text()
-    config = yaml.safe_load(raw_config)
+    with open(ctfpath, 'r') as config_file:
+        config = yaml.safe_load(config_file)
 
     return config if config else {}
 
 
-def load_config(workdir=".", search=True, cd=True):
+def load_config(workdir=".", search=True, cd=True) -> Dict[str, Any]:
     """Loads the challenge configuration file from the current directory, a specified directory, or optionally one of their parent directories. Optionally changes the working directory to the directory of the configuration file.
 
     Args:
@@ -161,8 +161,10 @@ def load_config(workdir=".", search=True, cd=True):
             f"Could not find a challenge.yml file in this{' or a parent' if search else ''} directory."
         )
 
-    raw_config = path.read_text()
-    config = yaml.safe_load(raw_config)
+    with open(path, 'r') as config_file:
+        config = yaml.safe_load(config_file)
+        if not config:
+            raise RuntimeError(f'Failed to load config from path "{path}"')
 
     if cd:
         os.chdir(path.parent)
@@ -170,7 +172,7 @@ def load_config(workdir=".", search=True, cd=True):
     return config
 
 
-def get_valid_config(workdir=None, search=True, cd=True):
+def get_valid_config(workdir: Union[str, Path] = None, search: bool = True, cd: bool = True) -> Any:
     """Loads the challenge configuration file from the current directory and makes sure its valid.
 
     Args:
@@ -219,7 +221,7 @@ def get_valid_config(workdir=None, search=True, cd=True):
     return validator.normalized_config
 
 
-def discover_challenges(search_start=None):
+def discover_challenges(search_start: bool = None) -> List[Path]:
     """Discovers all challenges at the same level as or in a subdirectory below the CTF configuration file.
 
     Returns:
@@ -272,7 +274,7 @@ def get_docker_client():
     return client
 
 
-def get_first_text_flag(config):
+def get_first_text_flag(config: Dict[str, Any]) -> Optional[str]:
     """Creates a valid flag with the flag format using the flag format and the first text flag, if it exists.
 
     Args:
@@ -315,7 +317,7 @@ def dockerize_string(string):
     return string[:128]
 
 
-def create_docker_name(title, container_name=None, chall_id=None):
+def create_docker_name(title: str, container_name: str = None, chall_id=None):
     """Converts challenge information into a most likely unique and valid docker tag name.
 
     Args:
@@ -379,7 +381,7 @@ def validate_solution_output(config, output):
     return validate_flag(config, output.strip())
 
 
-def validate_flag(config, submitted_flag):
+def validate_flag(config, submitted_flag: str) -> bool:
     """validates a flag against the flags in the challenge config.
 
     Args:
@@ -831,7 +833,7 @@ def generate_compose(configs, is_global=False):
 
 # https://stackoverflow.com/a/12514470
 # needs to exist to support python 3.6 & 3.7, otherwise shutil.copytree should be used with dirs_exist_ok=True
-def _copytree(src, dst, ignore=lambda dir, content: list()):
+def _copytree(src: Union[str, Path], dst: Union[str, Path], ignore=lambda dir, content: list()) -> None:
     if not os.path.exists(dst):
         os.makedirs(dst)
     dirlist = os.listdir(src)

@@ -16,23 +16,23 @@ import docker
 import argcomplete
 from .validator import ConfigValidator, is_url
 from .utils import (
-    CriticalException,
-    process_messages,
-    load_ctf_config,
-    load_config,
-    get_ctf_config_path,
-    get_valid_config,
-    discover_challenges,
-    get_docker_client,
-    create_docker_name,
-    build_docker_images,
+    _copytree,
     build_chall,
+    build_docker_images,
+    create_docker_name,
+    CriticalException,
+    discover_challenges,
+    format_user_service,
+    generate_compose,
+    get_ctf_config_path,
+    get_docker_client,
+    get_valid_config,
+    load_config,
+    load_ctf_config,
+    process_messages,
     start_chall,
     start_solution,
     validate_solution_output,
-    format_user_service,
-    generate_compose,
-    _copytree,
 )
 from .constants import *
 

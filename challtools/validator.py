@@ -1,11 +1,12 @@
-import os
-from copy import deepcopy
 import json
-from pathlib import Path
+import os
 import pkg_resources
-import yaml
 import re
+import yaml
+from copy import deepcopy
 from jsonschema import validate, ValidationError, Draft7Validator, validators
+from pathlib import Path
+from typing import Dict, Any, List, Tuple
 
 with pkg_resources.resource_stream("challtools", "codes.yml") as f:
     codes = yaml.safe_load(f)
@@ -14,7 +15,7 @@ with pkg_resources.resource_stream("challtools", "challenge.schema.json") as f:
     schema = json.load(f)
 
 
-def is_url(s):
+def is_url(s: str) -> bool:
     return s.startswith("http://") or s.startswith("https://")
 
 
@@ -64,7 +65,7 @@ class ConfigValidator:
 
     #     return DefaultValidatingDraft7Validator(schema).validate(self.normalized_config)
 
-    def validate(self):
+    def validate(self) -> Tuple[bool, List[Dict[str, Any]]]:
         """Validates the challenge config and returns a list of messages.
 
         Returns:
@@ -252,7 +253,7 @@ class ConfigValidator:
 
         return True, self.messages
 
-    def _raise_code(self, code, field=None, **formatting):
+    def _raise_code(self, code, field=None, **formatting) -> None:
         """Adds a formatted message entry into the messages array.
 
         Args:

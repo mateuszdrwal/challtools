@@ -8,7 +8,7 @@ templatepath = testpath / "templates"
 inittemplatepath = testpath / ".." / "challtools" / "templates"
 
 
-def populate_dir(path, template):
+def populate_dir(path: Union[str, Path], template: str) -> None:
     os.chdir(path)
 
     if not template or not isinstance(template, str):

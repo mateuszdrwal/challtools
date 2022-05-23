@@ -1,0 +1,6 @@
+types-PyYAML
+types-jsonschema
+types-pkg_resources
+types-flask
+types-setuptools
+types-requests

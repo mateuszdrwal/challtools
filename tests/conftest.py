@@ -3,7 +3,7 @@ import docker
 from challtools.utils import get_docker_client
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser) -> None:
     parser.addoption("--docker-fails", action="store_true")
     parser.addoption("--docker-strict", action="store_true")
 
@@ -29,7 +29,7 @@ def clean_container_state(docker_client):
         "sol_challtools_test_9461485faadf529f",
     ]
 
-    def remove_tags():
+    def remove_tags() -> None:
         for image in docker_client.images.list():
             for tag in image.tags:
                 if tag.split(":")[0] in relevant_tags:
