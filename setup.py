@@ -3,7 +3,7 @@ from pathlib import Path
 
 setuptools.setup(
     name="challtools",
-    version="0.4.3",
+    version="0.4.4",
     author="Mateusz Drwal",
     author_email="me@mateuszdrwal.com",
     description="A tool for managing CTF challenges and challenge repositories using the OpenChallSpec",
