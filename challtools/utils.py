@@ -188,9 +188,10 @@ def get_valid_config(workdir: Optional[Union[str, Path]] = None, search: bool = 
     Raises:
         CriticalException: If there are critical validation errors
     """
-    config = load_config(
-        search=search, cd=cd, **{"workdir": workdir} if workdir else {}
-    )
+    if workdir:
+        config = load_config(search=search, cd=cd, workdir=workdir)
+    else:
+        config = load_config(search=search, cd=cd)
 
     validator = ConfigValidator(config)
     messages = validator.validate()[1]
@@ -223,7 +224,7 @@ def get_valid_config(workdir: Optional[Union[str, Path]] = None, search: bool = 
     return validator.normalized_config
 
 
-def discover_challenges(search_start: Optional[bool] = None) -> List[Path]:
+def discover_challenges(search_start: Optional[str] = None) -> Optional[List[Path]]:
     """Discovers all challenges at the same level as or in a subdirectory below the CTF configuration file.
 
     Returns:
