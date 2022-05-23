@@ -1,9 +1,10 @@
-import pytest
 import docker
+import pytest
+
 from challtools.utils import get_docker_client
 
 
-def pytest_addoption(parser) -> None:
+def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption("--docker-fails", action="store_true")
     parser.addoption("--docker-strict", action="store_true")
 
@@ -17,12 +18,12 @@ def pytest_collection_modifyitems(session, config, items):
 
 
 @pytest.fixture(scope="session")
-def docker_client():
+def docker_client() -> docker.api.client.ContainerApiMixin:
     return get_docker_client()
 
 
 @pytest.fixture()
-def clean_container_state(docker_client):
+def clean_container_state(docker_client: docker.api.client.ContainerApiMixin):
     relevant_tags = [
         "challtools_test",
         "challtools_test_challenge_f9629917705648c9",

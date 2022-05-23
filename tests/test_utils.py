@@ -1,8 +1,11 @@
 import os
 import re
 from pathlib import Path
+from typing import Union
+
 import pytest
 import yaml
+
 from challtools.utils import (
     CriticalException,
     process_messages,
@@ -22,8 +25,6 @@ from challtools.utils import (
     start_solution,
 )
 from utils import populate_dir
-from typing import Union
-
 
 # TODO
 # class Test_process_messages:
@@ -31,73 +32,73 @@ from typing import Union
 
 
 class Test_get_ctf_config_path:
-    def test_root(self, tmp_path):
+    def test_root(self, tmp_path: Path) -> None:
         populate_dir(tmp_path, "simple_ctf")
         assert get_ctf_config_path() == tmp_path / "ctf.yml"
 
-    def test_subdir(self, tmp_path):
+    def test_subdir(self, tmp_path: Path) -> None:
         populate_dir(tmp_path, "simple_ctf")
         os.chdir("chall1")
         assert get_ctf_config_path() == tmp_path / "ctf.yml"
 
-    def test_yaml(self, tmp_path):
+    def test_yaml(self, tmp_path: Path) -> None:
         populate_dir(tmp_path, "simple_ctf")
         Path("ctf.yml").rename("ctf.yaml")
         assert get_ctf_config_path() == tmp_path / "ctf.yaml"
 
-    def test_missing(self, tmp_path):
+    def test_missing(self, tmp_path: Path) -> None:
         populate_dir(tmp_path, "minimal_valid")
         assert get_ctf_config_path() is None
 
 
 class Test_load_ctf_config:
-    def test_empty(self, tmp_path):
+    def test_empty(self, tmp_path: Path) -> None:
         populate_dir(tmp_path, "simple_ctf")
         assert load_ctf_config() == {}
 
-    def test_populated(self, tmp_path):
+    def test_populated(self, tmp_path: Path) -> None:
         populate_dir(tmp_path, "ctf_authors")
         assert load_ctf_config() == yaml.safe_load((tmp_path / "ctf.yml").read_text())
 
-    def test_missing(self, tmp_path):
+    def test_missing(self, tmp_path: Path) -> None:
         os.chdir(tmp_path)
         assert load_ctf_config() == None
 
 
 class Test_load_config:
-    def test_root(self, tmp_path):
+    def test_root(self, tmp_path: Path) -> None:
         populate_dir(tmp_path, "minimal_valid")
         assert load_config() == yaml.safe_load((tmp_path / "challenge.yml").read_text())
 
-    def test_subdir(self, tmp_path):
+    def test_subdir(self, tmp_path: Path) -> None:
         populate_dir(tmp_path, "subdir")
         os.chdir("subdir")
         assert load_config() == yaml.safe_load((tmp_path / "challenge.yml").read_text())
 
-    def test_yaml(self, tmp_path):
+    def test_yaml(self, tmp_path: Path) -> None:
         populate_dir(tmp_path, "minimal_valid")
         Path("challenge.yml").rename("challenge.yaml")
         assert load_config() == yaml.safe_load(
             (tmp_path / "challenge.yaml").read_text()
         )
 
-    def test_missing(self, tmp_path):
+    def test_missing(self, tmp_path: Path) -> None:
         os.chdir(tmp_path)
         with pytest.raises(CriticalException):
             load_config()
 
 
 class Test_get_valid_config:
-    def test_valid(self, tmp_path: Union[str, Path]) -> None:
+    def test_valid(self, tmp_path: Path) -> None:
         populate_dir(tmp_path, "minimal_valid")
         assert get_valid_config()
 
-    def test_invalid(self, tmp_path: Union[str, Path]) -> None:
+    def test_invalid(self, tmp_path: Path) -> None:
         populate_dir(tmp_path, "schema_violation")
         with pytest.raises(CriticalException):
             get_valid_config()
 
-    def test_invalid_list(self, tmp_path: Union[str, Path]) -> None:
+    def test_invalid_list(self, tmp_path: Path) -> None:
         populate_dir(tmp_path, "schema_violation_list")
         with pytest.raises(CriticalException):
             get_valid_config()

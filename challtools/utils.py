@@ -1,23 +1,25 @@
-import docker
 import hashlib
 import json
 import os
 import re
-import requests
 import shutil
 import subprocess
 import sys
-import yaml
-from .constants import *
-from .validator import ConfigValidator
 from pathlib import Path
 from typing import Dict, Any, Optional, Union, List
+
+import docker
+import requests
+import yaml
+
+from .constants import *
+from .validator import ConfigValidator
 
 class CriticalException(Exception):
     pass
 
 
-def process_messages(messages, verbose=False):
+def process_messages(messages: List[str], verbose: bool = False) -> Dict[str, Any]:
     """Processes a list of messages from validator.ConfigValidator.validate for printing.
 
     Args:
@@ -75,7 +77,7 @@ def process_messages(messages, verbose=False):
     }
 
 
-def get_ctf_config_path(search_start=Path(".")) -> Optional[Path]:
+def get_ctf_config_path(search_start: Path = Path(".")) -> Optional[Path]:
     """Locates the global CTF configuration file (ctf.yml) and returns a path to it.
 
     Returns:
@@ -93,7 +95,7 @@ def get_ctf_config_path(search_start=Path(".")) -> Optional[Path]:
     return None
 
 
-def get_config_path(search_start=Path(".")) -> Path:
+def get_config_path(search_start: Path = Path(".")) -> Path:
     """Locates the challenge configuration file (challenge.yml) and returns a path to it.
 
     Returns:
@@ -129,7 +131,7 @@ def load_ctf_config() -> Dict[str, Any]:
     return config if config else {}
 
 
-def load_config(workdir=".", search=True, cd=True) -> Dict[str, Any]:
+def load_config(workdir: str = ".", search: bool = True, cd: bool = True) -> Dict[str, Any]:
     """Loads the challenge configuration file from the current directory, a specified directory, or optionally one of their parent directories. Optionally changes the working directory to the directory of the configuration file.
 
     Args:
@@ -248,7 +250,7 @@ def discover_challenges(search_start: bool = None) -> List[Path]:
     return checkdir(root)
 
 
-def get_docker_client():
+def get_docker_client() -> docker.api.client.ContainerApiMixin:
     """Gets an authenticated docker client.
 
     Returns:
@@ -299,7 +301,7 @@ def get_first_text_flag(config: Dict[str, Any]) -> Optional[str]:
     return config["flag_format_prefix"] + text_flag + config["flag_format_suffix"]
 
 
-def dockerize_string(string):
+def dockerize_string(string: str) -> str:
     """Converts a string into a valid docker tag name.
 
     Args:
@@ -317,7 +319,7 @@ def dockerize_string(string):
     return string[:128]
 
 
-def create_docker_name(title: str, container_name: str = None, chall_id=None):
+def create_docker_name(title: str, container_name: str = None, chall_id=None) -> str:
     """Converts challenge information into a most likely unique and valid docker tag name.
 
     Args:
@@ -341,7 +343,7 @@ def create_docker_name(title: str, container_name: str = None, chall_id=None):
     return "_".join([title[:32], digest[:16]])
 
 
-def format_user_service(config, service_type, **kwargs):
+def format_user_service(config: Dict[str, Any], service_type: str, **kwargs) -> str:
     """Formats a string displayed to the user based on the service type and a substitution context (``display`` in the OpenChallSpec).
 
     Args:
@@ -368,7 +370,7 @@ def format_user_service(config, service_type, **kwargs):
     return string
 
 
-def validate_solution_output(config, output):
+def validate_solution_output(config: Dict[str, Any], output: str) -> bool:
     """validates a flag outputted by a solver by stripping the whitespace and validating the flag.
 
     Args:
@@ -381,7 +383,7 @@ def validate_solution_output(config, output):
     return validate_flag(config, output.strip())
 
 
-def validate_flag(config, submitted_flag: str) -> bool:
+def validate_flag(config: Dict[str, Any], submitted_flag: str) -> bool:
     """validates a flag against the flags in the challenge config.
 
     Args:
@@ -412,7 +414,7 @@ def validate_flag(config, submitted_flag: str) -> bool:
     return False
 
 
-def build_image(image, tag, client):
+def build_image(image: str, tag: str, client: docker.api.client.ContainerApiMixin) -> None:
     """Build a docker image given the image (as a path to a folder, if archive it will load it), the tag and the docker client.
 
     Args:
@@ -459,7 +461,7 @@ def build_image(image, tag, client):
         )
 
 
-def run_build_script(config):
+def run_build_script(config: Dict[str, Any]) -> None:
     if "build_script" not in config["custom"]:
         raise CriticalException(f"Build script has not been defined!")
 
@@ -478,7 +480,7 @@ def run_build_script(config):
         raise CriticalException(f"Build script exited with code {p.returncode}")
 
 
-def build_docker_images(config, client):
+def build_docker_images(config: Dict[str, Any], client: docker.api.client.ContainerApiMixin) -> bool:
     if not config["deployment"]:
         return False
 

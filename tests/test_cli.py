@@ -1,10 +1,12 @@
 import os
 from pathlib import Path
-import yaml
+
+import docker
 import pytest
+import yaml
+
 from challtools.utils import build_chall, get_valid_config
 from utils import populate_dir, main_wrapper, inittemplatepath
-
 
 class Test_allchalls:
     def test_validate(self, tmp_path: Path, capsys) -> None:
@@ -47,7 +49,7 @@ class Test_build:
         assert "nothing to do" in capsys.readouterr().out.lower()
 
     @pytest.mark.fails_without_docker
-    def test_single(self, tmp_path: Path, docker_client, clean_container_state) -> None:
+    def test_single(self, tmp_path: Path, docker_client: docker.api.client.ContainerApiMixin, clean_container_state) -> None:
         populate_dir(tmp_path, "trivial_tcp")
         assert main_wrapper(["build"]) == 0
         assert "challtools_test_challenge_f9629917705648c9:latest" in [
@@ -55,7 +57,7 @@ class Test_build:
         ]
 
     @pytest.mark.fails_without_docker
-    def test_subdir(self, tmp_path: Path, docker_client, clean_container_state) -> None:
+    def test_subdir(self, tmp_path: Path, docker_client: docker.api.client.ContainerApiMixin, clean_container_state) -> None:
         populate_dir(tmp_path, "trivial_tcp")
         os.chdir("container")
         assert main_wrapper(["build"]) == 0
@@ -64,7 +66,7 @@ class Test_build:
         ]
 
     @pytest.mark.fails_without_docker
-    def test_solution(self, tmp_path: Path, docker_client, clean_container_state) -> None:
+    def test_solution(self, tmp_path: Path, docker_client: docker.api.client.ContainerApiMixin, clean_container_state) -> None:
         populate_dir(tmp_path, "trivial_tcp_solution")
         assert main_wrapper(["build"]) == 0
         import time
@@ -147,7 +149,7 @@ class Test_ensureid:
 
 
 class Test_init:
-    def check_identical(self, tmp_path: Path, template) -> None:
+    def check_identical(self, tmp_path: Path, template) -> bool:
         if not (
             len(list(tmp_path.rglob("*")))
             == len(list((inittemplatepath / template).rglob("*"))) - 1

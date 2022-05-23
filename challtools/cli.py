@@ -1,20 +1,24 @@
 # PYTHON_ARGCOMPLETE_OK
+import argparse
+import hashlib
+import json
+import os
+import pkg_resources
+import shutil
 import sys
 import time
-import argparse
-import os
-import uuid
-import hashlib
-import shutil
 import urllib.parse
-import json
-from pathlib import Path
-import pkg_resources
+import uuid
+
+import argcomplete
+import docker
 import requests
 import yaml
 import docker
 import argcomplete
-from .validator import ConfigValidator, is_url
+
+from pathlib import Path
+from .constants import *
 from .utils import (
     _copytree,
     build_chall,
@@ -34,10 +38,10 @@ from .utils import (
     start_solution,
     validate_solution_output,
 )
-from .constants import *
+from .validator import ConfigValidator, is_url
 
 
-def main(passed_args=None):
+def main(passed_args: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         prog="challtools",
         description="A tool for managing CTF challenges and challenge repositories using the OpenChallSpec",
