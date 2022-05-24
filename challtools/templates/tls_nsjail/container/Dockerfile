@@ -19,11 +19,6 @@ RUN openssl req -nodes -new -x509 -keyout /var/web/certs/server.cert.key -out /v
 COPY haproxy.cfg /usr/local/etc/haproxy/haproxy.cfg
 RUN touch /usr/local/etc/haproxy/net.log
 
-RUN chown -R haproxy /usr/local/etc/haproxy
-RUN chown -R haproxy /var/web
-
-USER haproxy
-
 COPY --from=chroot / /chroot
 
 CMD haproxy -D -f /usr/local/etc/haproxy/haproxy.cfg & nsjail --port 1337 --chroot /chroot/ --user 1337 --group 1337 --cwd /home/ctf/ --tmpfsmount /tmp --bindmount_ro /etc/resolv.conf:/etc/resolv.conf /home/ctf/service
