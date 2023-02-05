@@ -196,6 +196,7 @@ class ConfigValidator:
             # B004 validate correct flag format prefix
             if (
                 "flag_format_prefixes" in self.ctf_config
+                and self.normalized_config["flag_format_prefix"] != None
                 and self.normalized_config["flag_format_prefix"]
                 not in self.ctf_config["flag_format_prefixes"]
             ):
