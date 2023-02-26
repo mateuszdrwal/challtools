@@ -14,7 +14,7 @@ import requests
 import yaml
 import docker
 import argcomplete
-from .validator import ConfigValidator
+from .validator import ConfigValidator, is_url
 from .utils import (
     CriticalException,
     process_messages,
@@ -372,7 +372,9 @@ def solve(args):  # TODO add support for solve script
 
 def compose(args):
     if args.all:
-        configs = [(path, get_valid_config(path)) for path in discover_challenges()]
+        configs = [
+            (path, get_valid_config(path, cd=False)) for path in discover_challenges()
+        ]
     else:
         configs = [(Path("."), get_valid_config())]
 
