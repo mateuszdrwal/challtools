@@ -106,7 +106,7 @@ class ConfigValidator:
                 message=e.message,
             )
             return (
-                True,
+                False,
                 self.messages,
             )  # stop validation here in case of schema violations
 
