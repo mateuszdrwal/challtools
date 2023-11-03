@@ -441,6 +441,8 @@ def build_image(image, tag, client):
                         raise CriticalException(decoded["error"])
                     if "stream" in decoded:
                         print(decoded["stream"], end="")
+                    if list(decoded.keys()) == ["message"]:
+                        raise CriticalException(decoded["message"])
 
         except docker.errors.APIError as e:
             raise CriticalException(e.explanation)
