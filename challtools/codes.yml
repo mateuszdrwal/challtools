@@ -19,6 +19,11 @@ A004:
   level: 3
   formatted_message: 'This challenge is missing a challenge ID, which is recommended and required by some systems. Generate one using "challtools ensureid" or add a "challenge_id" to the challenge configuration manually.'
   docs_message: The challenge is missing a challenge ID which is generally recommended and may be required by some systems. Generate one using "challtools ensureid" or add a "challenge_id" to the challenge configuration manually.
+A005:
+  name: Missing flag regex anchors
+  level: 3
+  formatted_message: 'The following regex flag is missing anchors (''^'', ''$'') in the challenge configuration file (challenge.yml): "{flag}".'
+  docs_message: A regex flag missing anchors ('^', '$') n the challenge configuration file (challenge.yml)
 
 # challtools messages
 B001:

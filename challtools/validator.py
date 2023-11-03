@@ -176,6 +176,12 @@ class ConfigValidator:
         if not self.normalized_config["challenge_id"]:
             self._raise_code("A004", "challenge_id")
 
+        # A005 validate regex flag contains anchors
+        for flag in self.normalized_config["flags"]:
+            if flag["type"] != "regex":
+                continue
+            if not (flag["flag"].startswith("^") and flag["flag"].endswith("$")):
+                self._raise_code("A005", "flags", flag=flag["flag"])
         ### CTF config validation
         # if no ctf config was provided to the validator we assume it does not exist and issue B001. not ideal as there might be other reasons for why the ctf config is not provided, but works for now
         if self.ctf_config == None:
