@@ -40,3 +40,31 @@ class Test_A005:
         success, errors = validator.validate()
         assert success
         assert any([error["code"] == "A005" for error in errors])
+
+
+class Test_A006:
+    def test_valid(self):
+        config = get_min_valid_config()
+        config["custom_service_types"] = [
+            {"type": "ssh", "display": "ssh display"},
+            {"type": "gopher", "display": "gopher display"},
+        ]
+        validator = ConfigValidator(config)
+
+        success, errors = validator.validate()
+
+        assert success
+        assert not any([error["code"] == "A006" for error in errors])
+
+    def test_invalid(self):
+        config = get_min_valid_config()
+        config["custom_service_types"] = [
+            {"type": "ssh", "display": "ssh display"},
+            {"type": "ssh", "display": "ssh display number two"},
+        ]
+        validator = ConfigValidator(config)
+
+        success, errors = validator.validate()
+
+        assert success
+        assert any([error["code"] == "A006" for error in errors])

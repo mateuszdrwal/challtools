@@ -24,6 +24,11 @@ A005:
   level: 3
   formatted_message: 'The following regex flag is missing anchors (''^'', ''$'') in the challenge configuration file (challenge.yml): "{flag}".'
   docs_message: A regex flag missing anchors ('^', '$') n the challenge configuration file (challenge.yml)
+A006:
+  name: Duplicate custom_service_types types
+  level: 4
+  formatted_message: 'The following custom service type contains a duplicate type (challenge.yml): "{type}".'
+  docs_message: A custom service type contains a duplicate type (challenge.yml)
 
 # challtools messages
 B001:
