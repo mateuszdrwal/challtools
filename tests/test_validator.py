@@ -100,3 +100,26 @@ class Test_A007:
 
         assert success
         assert any([error["code"] == "A007" for error in errors])
+
+
+class Test_A008:
+    def test_valid(self):
+        config = get_min_valid_config()
+        config["custom_service_types"] = [{"type": "ssh", "display": "ssh display"}]
+        config["predefined_services"] = [{"type": "ssh"}]
+        validator = ConfigValidator(config)
+
+        success, errors = validator.validate()
+
+        assert success
+        assert not any([error["code"] == "A008" for error in errors])
+
+    def test_invalid(self):
+        config = get_min_valid_config()
+        config["predefined_services"] = [{"type": "gopher"}]
+        validator = ConfigValidator(config)
+
+        success, errors = validator.validate()
+
+        assert success
+        assert any([error["code"] == "A008" for error in errors])

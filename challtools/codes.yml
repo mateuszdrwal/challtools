@@ -34,6 +34,11 @@ A007:
   level: 4
   formatted_message: 'The following predefined_service is missing a display format option (challenge.yml): {service}: "{option}".'
   docs_message: A predefined_service is missing a display format option (challenge.yml)
+A008:
+  name: Missing service type
+  level: 4
+  formatted_message: 'The following predefined_service is referencing missing a service type (challenge.yml): "{service_type}".'
+  docs_message: A predefined_service is referencing missing a service type (challenge.yml)
 
 # challtools messages
 B001:
