@@ -202,8 +202,14 @@ class ConfigValidator:
             type_candidate = [
                 service for service in service_types if service["type"] == service_type
             ]
+            # A008 missing service type
             if not type_candidate:
-                raise ValueError(f"Unknown service type {service_type}")
+                self._raise_code(
+                    "A008",
+                    "predefined_services",
+                    service_type=service_type,
+                )
+                continue
             print(type_candidate)
             string = type_candidate[0]["display"]
             for format_option in re.findall(r"(?<=\{)[^{}]+(?=\})", string):
