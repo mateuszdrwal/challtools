@@ -29,6 +29,11 @@ A006:
   level: 4
   formatted_message: 'The following custom service type contains a duplicate type (challenge.yml): "{type}".'
   docs_message: A custom service type contains a duplicate type (challenge.yml)
+A007:
+  name: Missing predefined_service display format option
+  level: 4
+  formatted_message: 'The following predefined_service is missing a display format option (challenge.yml): {service}: "{option}".'
+  docs_message: A predefined_service is missing a display format option (challenge.yml)
 
 # challtools messages
 B001:

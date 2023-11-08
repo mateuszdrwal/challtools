@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import pkg_resources
 import yaml
+import re
 from jsonschema import validate, ValidationError, Draft7Validator, validators
 
 with pkg_resources.resource_stream("challtools", "codes.yml") as f:
@@ -190,6 +191,29 @@ class ConfigValidator:
             if type_name in type_names:
                 self._raise_code("A006", "custom_service_types", type=type_name)
             type_names.add(type_name)
+
+        # A007 missing predefined_service display format option
+        service_types = [
+            {"type": "website", "display": "{url}"},
+            {"type": "tcp", "display": "nc {host} {port}"},
+        ] + self.normalized_config["custom_service_types"]
+        for predefined_service in self.normalized_config["predefined_services"]:
+            service_type = predefined_service["type"]
+            type_candidate = [
+                service for service in service_types if service["type"] == service_type
+            ]
+            if not type_candidate:
+                raise ValueError(f"Unknown service type {service_type}")
+            print(type_candidate)
+            string = type_candidate[0]["display"]
+            for format_option in re.findall(r"(?<=\{)[^{}]+(?=\})", string):
+                if not format_option in predefined_service:
+                    self._raise_code(
+                        "A007",
+                        "predefined_services",
+                        service=service_type,
+                        option=format_option,
+                    )
 
         ### CTF config validation
         # if no ctf config was provided to the validator we assume it does not exist and issue B001. not ideal as there might be other reasons for why the ctf config is not provided, but works for now
