@@ -68,3 +68,35 @@ class Test_A006:
 
         assert success
         assert any([error["code"] == "A006" for error in errors])
+
+
+class Test_A007:
+    def test_valid(self):
+        config = get_min_valid_config()
+        config["custom_service_types"] = [
+            {"type": "ssh", "display": "ssh {user}@{host} -p {port}"}
+        ]
+        config["predefined_services"] = [
+            {"type": "ssh", "user": "root", "host": "127.0.0.1", "port": "12345"}
+        ]
+        validator = ConfigValidator(config)
+
+        success, errors = validator.validate()
+
+        assert success
+        assert not any([error["code"] == "A007" for error in errors])
+
+    def test_invalid(self):
+        config = get_min_valid_config()
+        config["custom_service_types"] = [
+            {"type": "ssh", "display": "ssh {user}@{host} -p {port}"}
+        ]
+        config["predefined_services"] = [
+            {"type": "ssh", "user": "root", "host": "127.0.0.1"}
+        ]
+        validator = ConfigValidator(config)
+
+        success, errors = validator.validate()
+
+        assert success
+        assert any([error["code"] == "A007" for error in errors])
