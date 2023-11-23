@@ -37,7 +37,7 @@ A007:
 A008:
   name: Missing service type
   level: 4
-  formatted_message: 'The following predefined_service is referencing missing a service type (challenge.yml): "{service_type}".'
+  formatted_message: 'The following predefined_service is referencing a missing service type (challenge.yml): "{service_type}".'
   docs_message: A predefined_service is referencing missing a service type (challenge.yml)
 
 # challtools messages
