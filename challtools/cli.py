@@ -16,8 +16,6 @@ import argcomplete
 import docker
 import requests
 import yaml
-import docker
-import argcomplete
 
 from .constants import *
 from .utils import (

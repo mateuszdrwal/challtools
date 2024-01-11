@@ -1,3 +1,9 @@
+argcomplete
+docker
+pytest
+pyyaml
+requests
+
 types-PyYAML
 types-jsonschema
 types-pkg_resources
