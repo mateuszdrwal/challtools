@@ -1,12 +1,5 @@
 argcomplete
 docker
-pytest
+jsonschema
 pyyaml
 requests
-
-types-PyYAML
-types-jsonschema
-types-pkg_resources
-types-flask
-types-setuptools
-types-requests

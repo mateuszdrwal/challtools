@@ -46,7 +46,7 @@ DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
 
 
 class Message(object):
-    def __init__(self, code, field, name, level, message):
+    def __init__(self, code: str, field, name: str, level: int, message: str):
         self.code = code
         self.field = field
         self.name = name
@@ -58,7 +58,7 @@ class ConfigValidator:
     def __init__(self, config, ctf_config=None, challdir=None):
         if not isinstance(config, dict):
             raise ValueError("Config parameter needs to be a dict")
-        self.messages = []
+        self.messages: List[Message] = []
         self.config = {}
         self.normalized_config = {}
         self.config = config
@@ -262,7 +262,7 @@ class ConfigValidator:
 
         return True, self.messages
 
-    def _raise_code(self, code, field=None, **formatting) -> None:
+    def _raise_code(self, code: str, field: str = None, **formatting) -> None:
         """Adds a formatted message entry into the messages array.
 
         Args:

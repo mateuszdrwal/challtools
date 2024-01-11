@@ -1,0 +1,10 @@
+-r requirements.txt
+pytest
+pytest-cov
+
+types-flask
+types-jsonschema
+types-pkg_resources
+types-PyYAML
+types-requests
+types-setuptools
