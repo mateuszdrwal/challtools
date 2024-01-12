@@ -1,11 +1,12 @@
-import os
-from copy import deepcopy
 import json
-from pathlib import Path
+import os
 import pkg_resources
-import yaml
 import re
+import yaml
+from copy import deepcopy
 from jsonschema import validate, ValidationError, Draft7Validator, validators
+from pathlib import Path
+from typing import Dict, Any, List, Tuple
 
 with pkg_resources.resource_stream("challtools", "codes.yml") as f:
     codes = yaml.safe_load(f)
@@ -14,7 +15,7 @@ with pkg_resources.resource_stream("challtools", "challenge.schema.json") as f:
     schema = json.load(f)
 
 
-def is_url(s):
+def is_url(s: str) -> bool:
     return s.startswith("http://") or s.startswith("https://")
 
 
@@ -44,11 +45,20 @@ def extend_with_default(validator_class):
 DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
 
 
+class Message(object):
+    def __init__(self, code: str, field, name: str, level: int, message: str):
+        self.code = code
+        self.field = field
+        self.name = name
+        self.level = level
+        self.message = message
+
+
 class ConfigValidator:
     def __init__(self, config, ctf_config=None, challdir=None):
         if not isinstance(config, dict):
             raise ValueError("Config parameter needs to be a dict")
-        self.messages = []
+        self.messages: List[Message] = []
         self.config = {}
         self.normalized_config = {}
         self.config = config
@@ -64,7 +74,7 @@ class ConfigValidator:
 
     #     return DefaultValidatingDraft7Validator(schema).validate(self.normalized_config)
 
-    def validate(self):
+    def validate(self) -> Tuple[bool, List[Message]]:
         """Validates the challenge config and returns a list of messages.
 
         Returns:
@@ -252,7 +262,7 @@ class ConfigValidator:
 
         return True, self.messages
 
-    def _raise_code(self, code, field=None, **formatting):
+    def _raise_code(self, code: str, field: str = None, **formatting) -> None:
         """Adds a formatted message entry into the messages array.
 
         Args:
@@ -267,13 +277,13 @@ class ConfigValidator:
         # no valid field check because of A002
 
         self.messages.append(
-            {
-                "code": code,
-                "field": field,
-                "name": codes[code]["name"],
-                "level": codes[code]["level"],
-                "message": codes[code]["formatted_message"].format(
+            Message(
+                code=code,
+                field=field,
+                name=codes[code]["name"],
+                level=codes[code]["level"],
+                message=codes[code]["formatted_message"].format(
                     field_name=field, **formatting
                 ),
-            }
+            )
         )

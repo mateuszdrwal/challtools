@@ -1,10 +1,11 @@
 from flask import Flask
+from flask.typing import ResponseReturnValue
 
 app = Flask(__name__)
 
 
 @app.route("/")
-def index():
+def index() -> ResponseReturnValue:
     return "Template challenge running!"
 
 
