@@ -605,6 +605,7 @@ def push(args):
         "file_urls": file_urls,
         "flags": config["flags"],
         "order": config["custom"].get("order"),
+        "custom": config["custom"],
         "services": [
             {
                 "hyperlink": service_types[c["type"]]["hyperlink"],
