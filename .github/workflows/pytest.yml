@@ -20,6 +20,9 @@ jobs:
             pytest_args: --docker-fails --docker-strict
           - os: windows-latest
             pytest_args: --docker-fails # not strict since windows has docker partially available, just can't run linux containters
+        exclude:
+          - os: macos-latest
+            python: "3.7" # does not exist for arm64 macos, which is now the macos-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
