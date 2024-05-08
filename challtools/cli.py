@@ -14,6 +14,7 @@ import requests
 import yaml
 import docker
 import argcomplete
+from . import __version__
 from .validator import ConfigValidator, is_url
 from .utils import (
     CriticalException,
@@ -41,6 +42,9 @@ def main(passed_args=None):
     parser = argparse.ArgumentParser(
         prog="challtools",
         description="A tool for managing CTF challenges and challenge repositories using the OpenChallSpec",
+    )
+    parser.add_argument(
+        "-v", "--version", action="version", version=f"challtools {__version__}"
     )
     subparsers = parser.add_subparsers(metavar="COMMAND")
 
