@@ -128,7 +128,7 @@ class Test_compose:
         compose = yaml.safe_load(Path("docker-compose.yml").read_text())
         assert len(compose) == 2
         assert compose.get("services") == {
-            "challenge": {"build": "container", "ports": ["50000:13337"]}
+            "challenge": {"build": "container", "ports": ["50000:1337"], "privileged": True}
         }
 
 
