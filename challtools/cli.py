@@ -9,7 +9,7 @@ import shutil
 import urllib.parse
 import json
 from pathlib import Path
-import pkg_resources
+import importlib.resources
 import requests
 import yaml
 import docker
@@ -634,8 +634,8 @@ def push(args):
 def init(args):
 
     if args.list:
-        for template_path in Path(
-            pkg_resources.resource_filename("challtools", "templates")
+        for template_path in (
+            importlib.resources.files("challtools") / "templates"
         ).iterdir():
             print(
                 f"{template_path.name} - {(template_path/'DESCRIPTION').read_text().strip()}"
@@ -648,20 +648,23 @@ def init(args):
             "The current directory is not empty. To proceed anyways, run with -f. This may overwrite some files."
         )
 
-    template_dir = (
-        Path(pkg_resources.resource_filename("challtools", "templates")) / args.template
-    )
-    target_dir = Path(".").absolute()
-    if not template_dir.is_dir():
-        raise CriticalException(
-            f"Could not find template {args.template}. Use -l to list available templates."
-        )
+    with importlib.resources.as_file(
+        ((importlib.resources.files("challtools") / "templates") / args.template)
+    ) as template_dir:
+        target_dir = Path(".").absolute()
 
-    _copytree(
-        template_dir,
-        target_dir,
-        ignore=shutil.ignore_patterns("DESCRIPTION", "challenge.yml", "challenge.yaml"),
-    )
+        if not template_dir.is_dir():
+            raise CriticalException(
+                f"Could not find template {args.template}. Use -l to list available templates."
+            )
+
+        _copytree(
+            template_dir,
+            target_dir,
+            ignore=shutil.ignore_patterns(
+                "DESCRIPTION", "challenge.yml", "challenge.yaml"
+            ),
+        )
 
     if (template_dir / "challenge.yml").is_file():
         target_conf = target_dir / "challenge.yml"
@@ -692,9 +695,7 @@ def init(args):
 def templateCompleter(**kwargs):
     return [
         path.name
-        for path in Path(
-            pkg_resources.resource_filename("challtools", "templates")
-        ).iterdir()
+        for path in (importlib.resources.files("challtools") / "templates").iterdir()
     ]
 
 
