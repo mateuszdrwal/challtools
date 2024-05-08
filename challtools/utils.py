@@ -1,23 +1,25 @@
-import os
-import re
-import subprocess
-import sys
 import hashlib
 import json
+import os
+import re
 import shutil
+import subprocess
+import sys
 from pathlib import Path
-import yaml
+from typing import Dict, Any, Optional, Union, List, Tuple
+
 import docker
 import requests
-from .validator import ConfigValidator
-from .constants import *
+import yaml
 
+from .constants import *
+from .validator import ConfigValidator, Message
 
 class CriticalException(Exception):
     pass
 
 
-def process_messages(messages, verbose=False):
+def process_messages(messages: List[Message], verbose: bool = False) -> Dict[str, Any]:
     """Processes a list of messages from validator.ConfigValidator.validate for printing.
 
     Args:
@@ -37,17 +39,17 @@ def process_messages(messages, verbose=False):
     highest_level = 0
     message_strings = []
     for message in messages:
-        level_counts[message["level"] - 1] += 1
-        highest_level = max(highest_level, message["level"])
+        level_counts[message.level - 1] += 1
+        highest_level = max(highest_level, message.level)
 
         message_string = (
-            f"[{STYLED_LEVELS[message['level']-1]}] [{BOLD}{message['code']}{CLEAR}] "
+            f"[{STYLED_LEVELS[message.level-1]}] [{BOLD}{message.code}{CLEAR}] "
         )
-        if message["field"]:
-            message_string += f"{message['field']}: "
-        message_string += message["name"]
+        if message.field:
+            message_string += f"{message.field}: "
+        message_string += message.name
         if verbose:
-            message_string += "\n" + message["message"]
+            message_string += "\n" + message.message
         message_strings.append(message_string)
 
     level_name_counts = {i: count for i, count in enumerate(level_counts) if count}
@@ -75,7 +77,7 @@ def process_messages(messages, verbose=False):
     }
 
 
-def get_ctf_config_path(search_start=Path(".")):
+def get_ctf_config_path(search_start: Path = Path(".")) -> Optional[Path]:
     """Locates the global CTF configuration file (ctf.yml) and returns a path to it.
 
     Returns:
@@ -93,7 +95,7 @@ def get_ctf_config_path(search_start=Path(".")):
     return None
 
 
-def get_config_path(search_start=Path(".")):
+def get_config_path(search_start: Path = Path(".")) -> Optional[Path]:
     """Locates the challenge configuration file (challenge.yml) and returns a path to it.
 
     Returns:
@@ -111,7 +113,7 @@ def get_config_path(search_start=Path(".")):
     return None
 
 
-def load_ctf_config():
+def load_ctf_config() -> Dict[str, Any]:
     """Loads the global CTF configuration file (ctf.yml) from the current or a parent directory.
 
     Returns:
@@ -123,13 +125,13 @@ def load_ctf_config():
     if not ctfpath:
         return None
 
-    raw_config = ctfpath.read_text()
-    config = yaml.safe_load(raw_config)
+    with open(ctfpath, 'r') as config_file:
+        config = yaml.safe_load(config_file)
 
     return config if config else {}
 
 
-def load_config(workdir=".", search=True, cd=True):
+def load_config(workdir: str = ".", search: bool = True, cd: bool = True) -> Dict[str, Any]:
     """Loads the challenge configuration file from the current directory, a specified directory, or optionally one of their parent directories. Optionally changes the working directory to the directory of the configuration file.
 
     Args:
@@ -144,10 +146,10 @@ def load_config(workdir=".", search=True, cd=True):
         CriticalException: If the challenge configuration cannot be found
     """
 
-    path = Path(workdir).absolute()
+    workdir_path = Path(workdir).absolute()
 
     if search:
-        path = get_config_path(path)
+        path = get_config_path(workdir_path)
     else:
         if (path / "challenge.yml").exists():
             path = path / "challenge.yml"
@@ -161,8 +163,10 @@ def load_config(workdir=".", search=True, cd=True):
             f"Could not find a challenge.yml file in this{' or a parent' if search else ''} directory."
         )
 
-    raw_config = path.read_text()
-    config = yaml.safe_load(raw_config)
+    with open(path, 'r') as config_file:
+        config = yaml.safe_load(config_file)
+        if not config:
+            raise RuntimeError(f'Failed to load config from path "{path}"')
 
     if cd:
         os.chdir(path.parent)
@@ -170,7 +174,7 @@ def load_config(workdir=".", search=True, cd=True):
     return config
 
 
-def get_valid_config(workdir=None, search=True, cd=True):
+def get_valid_config(workdir: Optional[Union[str, Path]] = None, search: bool = True, cd: bool = True) -> Any:
     """Loads the challenge configuration file from the current directory and makes sure its valid.
 
     Args:
@@ -184,9 +188,10 @@ def get_valid_config(workdir=None, search=True, cd=True):
     Raises:
         CriticalException: If there are critical validation errors
     """
-    config = load_config(
-        search=search, cd=cd, **{"workdir": workdir} if workdir else {}
-    )
+    if workdir:
+        config = load_config(search=search, cd=cd, workdir=workdir)
+    else:
+        config = load_config(search=search, cd=cd)
 
     validator = ConfigValidator(config)
     messages = validator.validate()[1]
@@ -195,7 +200,7 @@ def get_valid_config(workdir=None, search=True, cd=True):
     if highest_level == 5:
         print(
             "\n".join(
-                process_messages([m for m in messages if m["level"] == 5])[
+                process_messages([m for m in messages if m.level == 5])[
                     "message_strings"
                 ]
             )
@@ -207,7 +212,7 @@ def get_valid_config(workdir=None, search=True, cd=True):
     elif highest_level == 4:
         print(
             "\n".join(
-                process_messages([m for m in messages if m["level"] == 4])[
+                process_messages([m for m in messages if m.level == 4])[
                     "message_strings"
                 ]
             )
@@ -219,21 +224,19 @@ def get_valid_config(workdir=None, search=True, cd=True):
     return validator.normalized_config
 
 
-def discover_challenges(search_start=None):
+def discover_challenges(search_start: Optional[str] = None) -> Optional[List[Path]]:
     """Discovers all challenges at the same level as or in a subdirectory below the CTF configuration file.
 
     Returns:
         list: A list of pathlib.Path objects to all found challenge configurations
         None: If there was no CTF config
     """
-    root = get_ctf_config_path(
-        **{"search_start": search_start} if search_start else {}
-    ).parent
-
+    root = (get_ctf_config_path(search_start) if search_start else get_ctf_config_path())
     if not root:
         return None
+    root = root.parent
 
-    def checkdir(d):
+    def checkdir(d: Path) -> List[Path]:
         if (d / "challenge.yml").exists():
             return [d / "challenge.yml"]
         if (d / "challenge.yaml").exists():
@@ -246,7 +249,7 @@ def discover_challenges(search_start=None):
     return checkdir(root)
 
 
-def get_docker_client():
+def get_docker_client() -> docker.api.client.ContainerApiMixin:
     """Gets an authenticated docker client.
 
     Returns:
@@ -272,7 +275,7 @@ def get_docker_client():
     return client
 
 
-def get_first_text_flag(config):
+def get_first_text_flag(config: Dict[str, Any]) -> Optional[str]:
     """Creates a valid flag with the flag format using the flag format and the first text flag, if it exists.
 
     Args:
@@ -297,7 +300,7 @@ def get_first_text_flag(config):
     return config["flag_format_prefix"] + text_flag + config["flag_format_suffix"]
 
 
-def dockerize_string(string):
+def dockerize_string(string: str) -> str:
     """Converts a string into a valid docker tag name.
 
     Args:
@@ -315,7 +318,7 @@ def dockerize_string(string):
     return string[:128]
 
 
-def create_docker_name(title, container_name=None, chall_id=None):
+def create_docker_name(title: str, container_name: Optional[str] = None, chall_id: Optional[str] = None) -> str:
     """Converts challenge information into a most likely unique and valid docker tag name.
 
     Args:
@@ -339,7 +342,7 @@ def create_docker_name(title, container_name=None, chall_id=None):
     return "_".join([title[:32], digest[:16]])
 
 
-def format_user_service(config, service_type, **kwargs):
+def format_user_service(config: Dict[str, Any], service_type: str, **kwargs) -> str:
     """Formats a string displayed to the user based on the service type and a substitution context (``display`` in the OpenChallSpec).
 
     Args:
@@ -366,7 +369,7 @@ def format_user_service(config, service_type, **kwargs):
     return string
 
 
-def validate_solution_output(config, output):
+def validate_solution_output(config: Dict[str, Any], output: str) -> bool:
     """validates a flag outputted by a solver by stripping the whitespace and validating the flag.
 
     Args:
@@ -379,7 +382,7 @@ def validate_solution_output(config, output):
     return validate_flag(config, output.strip())
 
 
-def validate_flag(config, submitted_flag):
+def validate_flag(config: Dict[str, Any], submitted_flag: str) -> bool:
     """validates a flag against the flags in the challenge config.
 
     Args:
@@ -410,7 +413,7 @@ def validate_flag(config, submitted_flag):
     return False
 
 
-def build_image(image, tag, client):
+def build_image(image: str, tag: str, client: docker.api.client.ContainerApiMixin) -> None:
     """Build a docker image given the image (as a path to a folder, if archive it will load it), the tag and the docker client.
 
     Args:
@@ -457,7 +460,7 @@ def build_image(image, tag, client):
         )
 
 
-def run_build_script(config):
+def run_build_script(config: Dict[str, Any]) -> None:
     if "build_script" not in config["custom"]:
         raise CriticalException(f"Build script has not been defined!")
 
@@ -476,7 +479,7 @@ def run_build_script(config):
         raise CriticalException(f"Build script exited with code {p.returncode}")
 
 
-def build_docker_images(config, client):
+def build_docker_images(config: Dict[str, Any], client: docker.api.client.ContainerApiMixin) -> bool:
     if not config["deployment"]:
         return False
 
@@ -511,7 +514,7 @@ def build_docker_images(config, client):
     return True
 
 
-def build_chall(config):
+def build_chall(config: Dict[str, Any]) -> bool:
     """Builds a challenge including running the build script and building service and solution docker images. Expects to be run from the root directory of the challenge.
 
     Args:
@@ -554,7 +557,7 @@ def build_chall(config):
     return did_something
 
 
-def start_chall(config):
+def start_chall(config: Dict[str, Any]) -> Tuple[List[docker.api.client.ContainerApiMixin], List[str]]:
     """Starts all docker containers for this challenge.
 
     Args:
@@ -661,7 +664,7 @@ def start_chall(config):
     return containers, service_strings
 
 
-def start_solution(config):
+def start_solution(config: Dict[str, Any]) -> docker.api.client.ContainerApiMixin:
     """Starts a solution container for this challenge.
 
     Args:
@@ -757,7 +760,7 @@ def generate_compose(configs, is_global=False):
 
         # TODO handle services with set external ports first so the auto assigned ports dont potentially conflict with them
         for name, container in config["deployment"]["containers"].items():
-            compose_service = {"ports": []}
+            compose_service: Dict[str, Any] = {"ports": []}
             volumes = []
             networks = []
 
@@ -831,7 +834,7 @@ def generate_compose(configs, is_global=False):
 
 # https://stackoverflow.com/a/12514470
 # needs to exist to support python 3.6 & 3.7, otherwise shutil.copytree should be used with dirs_exist_ok=True
-def _copytree(src, dst, ignore=lambda dir, content: list()):
+def _copytree(src: Union[str, Path], dst: Union[str, Path], ignore=lambda dir, content: list()) -> None:
     if not os.path.exists(dst):
         os.makedirs(dst)
     dirlist = os.listdir(src)

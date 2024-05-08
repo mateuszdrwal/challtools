@@ -1,5 +1,7 @@
 import os
 from pathlib import Path
+from typing import List, Union
+
 from challtools.cli import main
 from challtools.utils import _copytree
 
@@ -8,7 +10,7 @@ templatepath = testpath / "templates"
 inittemplatepath = testpath / ".." / "challtools" / "templates"
 
 
-def populate_dir(path, template):
+def populate_dir(path: Union[str, Path], template: str) -> None:
     os.chdir(path)
 
     if not template or not isinstance(template, str):
@@ -20,7 +22,7 @@ def populate_dir(path, template):
     _copytree(templatepath / template, path)
 
 
-def main_wrapper(args):
+def main_wrapper(args: List[str]) -> int:
     try:
         exit_code = main(args)
     except SystemExit as e:

@@ -19,7 +19,7 @@ class Test_A002:
 
         success, errors = validator.validate()
         assert not success
-        assert any([error["code"] == "A002" for error in errors])
+        assert any([error.code == "A002" for error in errors])
 
 
 class Test_A005:
@@ -30,7 +30,7 @@ class Test_A005:
 
         success, errors = validator.validate()
         assert success
-        assert not any([error["code"] == "A005" for error in errors])
+        assert not any([error.code == "A005" for error in errors])
 
     def test_warn(self):
         config = get_min_valid_config()
@@ -39,7 +39,7 @@ class Test_A005:
 
         success, errors = validator.validate()
         assert success
-        assert any([error["code"] == "A005" for error in errors])
+        assert any([error.code == "A005" for error in errors])
 
 
 class Test_A006:
@@ -54,7 +54,7 @@ class Test_A006:
         success, errors = validator.validate()
 
         assert success
-        assert not any([error["code"] == "A006" for error in errors])
+        assert not any([error.code == "A006" for error in errors])
 
     def test_invalid(self):
         config = get_min_valid_config()
@@ -67,7 +67,7 @@ class Test_A006:
         success, errors = validator.validate()
 
         assert success
-        assert any([error["code"] == "A006" for error in errors])
+        assert any([error.code == "A006" for error in errors])
 
 
 class Test_A007:
@@ -84,7 +84,7 @@ class Test_A007:
         success, errors = validator.validate()
 
         assert success
-        assert not any([error["code"] == "A007" for error in errors])
+        assert not any([error.code == "A007" for error in errors])
 
     def test_invalid(self):
         config = get_min_valid_config()
@@ -99,7 +99,7 @@ class Test_A007:
         success, errors = validator.validate()
 
         assert success
-        assert any([error["code"] == "A007" for error in errors])
+        assert any([error.code == "A007" for error in errors])
 
 
 class Test_A008:
@@ -112,7 +112,7 @@ class Test_A008:
         success, errors = validator.validate()
 
         assert success
-        assert not any([error["code"] == "A008" for error in errors])
+        assert not any([error.code == "A008" for error in errors])
 
     def test_invalid(self):
         config = get_min_valid_config()
@@ -121,5 +121,7 @@ class Test_A008:
 
         success, errors = validator.validate()
 
+        print(errors)
+
         assert success
-        assert any([error["code"] == "A008" for error in errors])
+        assert any([error.code == "A008" for error in errors])
