@@ -606,6 +606,7 @@ def push(args):
         "flags": config["flags"],
         "order": config["custom"].get("order"),
         "custom": config["custom"],
+        "human_metadata": config["human_metadata"],
         "services": [
             {
                 "hyperlink": service_types[c["type"]]["hyperlink"],
