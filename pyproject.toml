@@ -27,4 +27,3 @@ urls = { repository = "https://github.com/mateuszdrwal/challtools" }
 dynamic = ["version"]
 
 [tool.setuptools_scm]
-version_file = "challtools/_version.py"
