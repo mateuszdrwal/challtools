@@ -4,7 +4,6 @@ import subprocess
 import sys
 import hashlib
 import json
-import shutil
 from pathlib import Path
 import yaml
 import docker
@@ -827,18 +826,3 @@ def generate_compose(configs, is_global=False):
         del compose["networks"]
 
     return compose
-
-
-# https://stackoverflow.com/a/12514470
-# needs to exist to support python 3.6 & 3.7, otherwise shutil.copytree should be used with dirs_exist_ok=True
-def _copytree(src, dst, ignore=lambda dir, content: list()):
-    if not os.path.exists(dst):
-        os.makedirs(dst)
-    dirlist = os.listdir(src)
-    for item in set(dirlist).difference(ignore(src, dirlist)):
-        s = os.path.join(src, item)
-        d = os.path.join(dst, item)
-        if os.path.isdir(s):
-            _copytree(s, d, ignore=ignore)
-        else:
-            shutil.copy(s, d)

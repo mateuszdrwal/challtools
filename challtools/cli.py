@@ -33,7 +33,6 @@ from .utils import (
     validate_solution_output,
     format_user_service,
     generate_compose,
-    _copytree,
 )
 from .constants import *
 
@@ -662,12 +661,13 @@ def init(args):
                 f"Could not find template {args.template}. Use -l to list available templates."
             )
 
-        _copytree(
+        shutil.copytree(
             template_dir,
             target_dir,
             ignore=shutil.ignore_patterns(
                 "DESCRIPTION", "challenge.yml", "challenge.yaml"
             ),
+            dirs_exist_ok=True,
         )
 
     if (template_dir / "challenge.yml").is_file():
