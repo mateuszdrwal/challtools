@@ -9,7 +9,7 @@ import shutil
 import urllib.parse
 import json
 from pathlib import Path
-import importlib.resources
+import importlib_resources
 import requests
 import yaml
 import docker
@@ -635,7 +635,7 @@ def init(args):
 
     if args.list:
         for template_path in (
-            importlib.resources.files("challtools") / "templates"
+            importlib_resources.files("challtools") / "templates"
         ).iterdir():
             print(
                 f"{template_path.name} - {(template_path/'DESCRIPTION').read_text().strip()}"
@@ -648,8 +648,8 @@ def init(args):
             "The current directory is not empty. To proceed anyways, run with -f. This may overwrite some files."
         )
 
-    with importlib.resources.as_file(
-        ((importlib.resources.files("challtools") / "templates") / args.template)
+    with importlib_resources.as_file(
+        ((importlib_resources.files("challtools") / "templates") / args.template)
     ) as template_dir:
         target_dir = Path(".").absolute()
 
@@ -695,7 +695,7 @@ def init(args):
 def templateCompleter(**kwargs):
     return [
         path.name
-        for path in (importlib.resources.files("challtools") / "templates").iterdir()
+        for path in (importlib_resources.files("challtools") / "templates").iterdir()
     ]
 
 

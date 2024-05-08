@@ -21,6 +21,7 @@ dependencies = [
     "requests>=2.0.0",
     'pypiwin32;platform_system=="Windows"',
     "argcomplete>=2.0.0",
+    "importlib-resources", # backport, only required for python 3.7 & 3.8 support
 ]
 scripts = { challtools = "challtools.cli:main" }
 urls = { repository = "https://github.com/mateuszdrwal/challtools" }

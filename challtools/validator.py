@@ -2,15 +2,15 @@ import os
 from copy import deepcopy
 import json
 from pathlib import Path
-import importlib.resources
+import importlib_resources
 import yaml
 import re
 from jsonschema import validate, ValidationError, Draft7Validator, validators
 
-with (importlib.resources.files("challtools") / "codes.yml").open() as f:
+with (importlib_resources.files("challtools") / "codes.yml").open() as f:
     codes = yaml.safe_load(f)
 
-with (importlib.resources.files("challtools") / "challenge.schema.json").open() as f:
+with (importlib_resources.files("challtools") / "challenge.schema.json").open() as f:
     schema = json.load(f)
 
 
