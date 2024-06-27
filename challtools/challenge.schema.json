@@ -307,8 +307,7 @@
                                     "type": "object",
                                     "required": [
                                         "type",
-                                        "internal_port",
-                                        "external_port"
+                                        "internal_port"
                                     ],
                                     "additionalProperties": false,
                                     "properties": {
