@@ -112,6 +112,12 @@ def main(passed_args=None):
         action="store_true",
         help="Write a single docker-compose.yml for all challenges in the CTF",
     )
+    compose_parser.add_argument(
+        "--restart-policy",
+        type=str,
+        default="no",
+        help="The restart policy to use for all services in the docker-compose file",
+    )
     compose_parser.set_defaults(func=compose)
 
     ensureid_desc = (
@@ -381,13 +387,13 @@ def compose(args):
     else:
         configs = [(Path("."), get_valid_config())]
 
-    compose = generate_compose(configs, args.all)
+    compose = generate_compose(configs, args.all, restart_policy=args.restart_policy)
 
     if not compose["services"]:
         print(f"{BOLD}No services defined, nothing to do{CLEAR}")
         return 0
 
-    Path("docker-compose.yml").write_text(yaml.dump(compose))
+    Path("compose.yml").write_text(yaml.dump(compose))
 
     print(f"{SUCCESS}docker-compose.yml written!{CLEAR}")
     return 0

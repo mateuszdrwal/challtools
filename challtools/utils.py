@@ -644,7 +644,7 @@ def start_chall(config):
             ports=ports,
             detach=True,
             environment={"TEST": "true"},
-            privileged=container_config["privileged"]
+            privileged=container_config["privileged"],
             # TODO volumes
         )
 
@@ -728,10 +728,10 @@ def start_solution(config):
     return container
 
 
-def generate_compose(configs, is_global=False):
+def generate_compose(configs, is_global=False, restart_policy="no", start_port=50000):
     # TODO this whole functions paths are broken, there should be a path argument to generate paths relative to and `is_global` shouldn't exist
-    compose = {"version": "3", "services": {}, "volumes": {}, "networks": {}}
-    next_port = 50000
+    compose = {"services": {}, "volumes": {}, "networks": {}}
+    next_port = start_port
     used_ports = set()
 
     for path, config in configs:
@@ -756,7 +756,7 @@ def generate_compose(configs, is_global=False):
 
         # TODO handle services with set external ports first so the auto assigned ports dont potentially conflict with them
         for name, container in config["deployment"]["containers"].items():
-            compose_service = {"ports": []}
+            compose_service = {"ports": [], "restart": restart_policy}
             volumes = []
             networks = []
 

@@ -119,16 +119,21 @@ class Test_compose:
     def test_no_service(self, tmp_path):
         populate_dir(tmp_path, "minimal_valid")
         assert main_wrapper(["compose"]) == 0
-        assert not Path("docker-compose.yml").exists()
+        assert not Path("compose.yml").exists()
 
     def test_single(self, tmp_path):
         populate_dir(tmp_path, "trivial_tcp")
-        assert main_wrapper(["compose"]) == 0
-        assert Path("docker-compose.yml").exists()
-        compose = yaml.safe_load(Path("docker-compose.yml").read_text())
-        assert len(compose) == 2
+        assert main_wrapper(["compose", "--restart-policy", "always"]) == 0
+        assert Path("compose.yml").exists()
+        compose = yaml.safe_load(Path("compose.yml").read_text())
+        assert len(compose) == 1
         assert compose.get("services") == {
-            "challenge": {"build": "container", "ports": ["50000:1337"], "privileged": True}
+            "challenge": {
+                "build": "container",
+                "ports": ["50000:1337"],
+                "privileged": True,
+                "restart": "always",
+            }
         }
 
 
