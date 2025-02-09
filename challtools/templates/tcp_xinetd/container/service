@@ -1,4 +1,0 @@
-#!/bin/sh
-
-echo 'Template challenge running!'
-/bin/sh -i
