@@ -1,5 +1,6 @@
 import os
 import time
+import pytest
 import requests
 from pwn import remote
 from challtools.utils import get_valid_config, start_chall
@@ -60,22 +61,27 @@ def run_template_test(tmp_path, docker_client, template_name):
         container.remove()
 
 
+@pytest.mark.fails_without_docker
 def test_flask_template(tmp_path, docker_client):
     run_template_test(tmp_path, docker_client, "flask")
 
 
+@pytest.mark.fails_without_docker
 def test_php_template(tmp_path, docker_client):
     run_template_test(tmp_path, docker_client, "php")
 
 
 # pwntools ssh doesn't work that great, so this is not trivial to test
+# @pytest.mark.fails_without_docker
 # def test_ssh_template(tmp_path, docker_client):
 #     run_template_test(tmp_path, docker_client, "ssh")
 
 
+@pytest.mark.fails_without_docker
 def test_tcp_nsjail_template(tmp_path, docker_client):
     run_template_test(tmp_path, docker_client, "tcp_nsjail")
 
 
+@pytest.mark.fails_without_docker
 def test_tls_nsjail_template(tmp_path, docker_client):
     run_template_test(tmp_path, docker_client, "tls_nsjail")
