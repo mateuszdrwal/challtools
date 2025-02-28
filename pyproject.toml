@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "challtools"
-authors = [{ name = "Mateusz Drwal", email = "me@mateuszdrwal.com" }]
+authors = [{ name = "Mateusz Drwal", email = "challtools@mateuszdrwal.com" }]
 description = "A tool for managing CTF challenges and challenge repositories using the OpenChallSpec"
 readme = "README.md"
 classifiers = [
