@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return "Template challenge running!"
+    return "Template challenge running!\n\nCTF{template_flag}"
 
 
 if __name__ == "__main__":
