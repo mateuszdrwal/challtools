@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from challtools.cli import main
+from challtools.entry import main
 
 testpath = Path(__file__).parent
 templatepath = testpath / "templates"

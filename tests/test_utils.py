@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 import yaml
 from challtools.utils import (
-    CriticalException,
     process_messages,
     get_ctf_config_path,
     load_ctf_config,
@@ -21,6 +20,7 @@ from challtools.utils import (
     start_chall,
     start_solution,
 )
+from challtools.exceptions import CriticalException
 from utils import populate_dir
 
 

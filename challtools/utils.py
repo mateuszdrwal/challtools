@@ -8,12 +8,9 @@ from pathlib import Path
 import yaml
 import docker
 import requests
-from .validator import ConfigValidator
-from .constants import *
-
-
-class CriticalException(Exception):
-    pass
+from challtools.validator import ConfigValidator
+from challtools.exceptions import CriticalException
+from challtools.constants import *
 
 
 def process_messages(messages, verbose=False):
