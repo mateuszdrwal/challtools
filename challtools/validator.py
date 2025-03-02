@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Any, cast
 from collections.abc import Generator
-import importlib_resources
+import importlib.resources
 import yaml
 from jsonschema import validate, ValidationError, Draft7Validator, validators
 from jsonschema.protocols import Validator
@@ -14,10 +14,10 @@ from challtools.types import (
 )
 
 
-with (importlib_resources.files("challtools") / "codes.yml").open() as f:
+with (importlib.resources.files("challtools") / "codes.yml").open() as f:
     codes = yaml.safe_load(f)
 
-with (importlib_resources.files("challtools") / "challenge.schema.json").open() as f:
+with (importlib.resources.files("challtools") / "challenge.schema.json").open() as f:
     schema = json.load(f)
 
 

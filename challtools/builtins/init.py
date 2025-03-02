@@ -1,7 +1,7 @@
 import uuid
 import shutil
 from pathlib import Path
-import importlib_resources
+import importlib.resources
 from challtools.utils import load_ctf_config
 from challtools.exceptions import CriticalException
 from challtools.constants import *
@@ -10,7 +10,7 @@ from challtools.constants import *
 def run(args):
     if args.list:
         for template_path in (
-            importlib_resources.files("challtools") / "templates"
+            importlib.resources.files("challtools") / "templates"
         ).iterdir():
             print(
                 f"{template_path.name} - {(template_path/'DESCRIPTION').read_text().strip()}"
@@ -23,8 +23,8 @@ def run(args):
             "The current directory is not empty. To proceed anyways, run with -f. This may overwrite some files."
         )
 
-    with importlib_resources.as_file(
-        ((importlib_resources.files("challtools") / "templates") / args.template)
+    with importlib.resources.as_file(
+        ((importlib.resources.files("challtools") / "templates") / args.template)
     ) as template_dir:
         target_dir = Path(".").absolute()
 
@@ -71,5 +71,5 @@ def run(args):
 def template_completer(**kwargs):
     return [
         path.name
-        for path in (importlib_resources.files("challtools") / "templates").iterdir()
+        for path in (importlib.resources.files("challtools") / "templates").iterdir()
     ]
