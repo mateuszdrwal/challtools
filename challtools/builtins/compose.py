@@ -1,7 +1,9 @@
 from pathlib import Path
+
 import yaml
-from challtools.utils import get_valid_config, discover_challenges, generate_compose
+
 from challtools.constants import *
+from challtools.utils import discover_challenges, generate_compose, get_valid_config
 
 
 def run(args):

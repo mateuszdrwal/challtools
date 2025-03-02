@@ -1,5 +1,5 @@
-from challtools.utils import get_valid_config, format_user_service
 from challtools.constants import *
+from challtools.utils import format_user_service, get_valid_config
 
 
 def run(args):

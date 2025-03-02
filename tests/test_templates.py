@@ -1,10 +1,12 @@
 import os
 import time
+
 import pytest
 import requests
 from pwn import remote
-from challtools.utils import get_valid_config, start_chall
 from utils import main_wrapper
+
+from challtools.utils import get_valid_config, start_chall
 
 
 def run_template_test(tmp_path, docker_client, template_name):

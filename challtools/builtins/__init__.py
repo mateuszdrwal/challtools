@@ -1,4 +1,5 @@
 import argparse
+
 from challtools.plugin import Plugin, lazy_runner
 
 

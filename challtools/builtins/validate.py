@@ -1,7 +1,8 @@
 from pathlib import Path
-from challtools.validator import ConfigValidator
-from challtools.utils import load_config, load_ctf_config, process_messages
+
 from challtools.constants import *
+from challtools.utils import load_config, load_ctf_config, process_messages
+from challtools.validator import ConfigValidator
 
 
 def run(args):

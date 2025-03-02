@@ -1,12 +1,14 @@
 # PYTHON_ARGCOMPLETE_OK
 import argparse
 import inspect
+
 import argcomplete
-from challtools import __version__
+
 import challtools.builtins
-from challtools.plugin import Plugin
-from challtools.exceptions import CriticalException
+from challtools import __version__
 from challtools.constants import *
+from challtools.exceptions import CriticalException
+from challtools.plugin import Plugin
 
 
 def main(passed_args=None):

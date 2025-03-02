@@ -1,19 +1,21 @@
 import hashlib
-import urllib.parse
 import json
+import urllib.parse
 from pathlib import Path
+
 import requests
+
+from challtools.constants import *
+from challtools.exceptions import CriticalException
 from challtools.utils import (
-    get_valid_config,
-    load_ctf_config,
-    get_docker_client,
-    format_user_service,
     build_docker_images,
     create_docker_name,
+    format_user_service,
+    get_docker_client,
+    get_valid_config,
+    load_ctf_config,
 )
 from challtools.validator import is_url
-from challtools.exceptions import CriticalException
-from challtools.constants import *
 
 
 def run(args):

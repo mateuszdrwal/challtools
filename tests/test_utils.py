@@ -1,28 +1,29 @@
 import os
 import re
 from pathlib import Path
+
 import pytest
 import yaml
-from challtools.utils import (
-    process_messages,
-    get_ctf_config_path,
-    load_ctf_config,
-    load_config,
-    get_valid_config,
-    discover_challenges,
-    get_first_text_flag,
-    create_docker_name,
-    format_user_service,
-    validate_solution_output,
-    validate_flag,
-    build_image,
-    build_chall,
-    start_chall,
-    start_solution,
-)
-from challtools.exceptions import CriticalException
 from utils import populate_dir
 
+from challtools.exceptions import CriticalException
+from challtools.utils import (
+    build_chall,
+    build_image,
+    create_docker_name,
+    discover_challenges,
+    format_user_service,
+    get_ctf_config_path,
+    get_first_text_flag,
+    get_valid_config,
+    load_config,
+    load_ctf_config,
+    process_messages,
+    start_chall,
+    start_solution,
+    validate_flag,
+    validate_solution_output,
+)
 
 # TODO
 # class Test_process_messages:

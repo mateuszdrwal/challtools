@@ -1,10 +1,11 @@
-import uuid
-import shutil
-from pathlib import Path
 import importlib.resources
-from challtools.utils import load_ctf_config
-from challtools.exceptions import CriticalException
+import shutil
+import uuid
+from pathlib import Path
+
 from challtools.constants import *
+from challtools.exceptions import CriticalException
+from challtools.utils import load_ctf_config
 
 
 def run(args):

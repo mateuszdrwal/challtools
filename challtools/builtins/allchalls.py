@@ -1,7 +1,8 @@
 import os
-from challtools.utils import discover_challenges, get_ctf_config_path
-from challtools.exceptions import CriticalException
+
 from challtools.constants import *
+from challtools.exceptions import CriticalException
+from challtools.utils import discover_challenges, get_ctf_config_path
 
 
 def run(args):

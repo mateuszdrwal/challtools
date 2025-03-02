@@ -1,5 +1,6 @@
-import pytest
 import docker
+import pytest
+
 from challtools.utils import get_docker_client
 
 

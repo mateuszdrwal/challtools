@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import TypedDict, Any
+
+from typing import Any, TypedDict
 
 JsonDict = dict[str, Any]
 

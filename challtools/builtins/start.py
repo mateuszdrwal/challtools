@@ -1,7 +1,9 @@
 import sys
+
 import docker
-from challtools.utils import get_valid_config, build_chall, start_chall
+
 from challtools.constants import *
+from challtools.utils import build_chall, get_valid_config, start_chall
 
 
 def run(args):

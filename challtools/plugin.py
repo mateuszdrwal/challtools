@@ -1,6 +1,6 @@
-import sys
-import importlib.util
 import argparse
+import importlib.util
+import sys
 
 
 class Plugin:

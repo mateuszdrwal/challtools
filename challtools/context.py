@@ -1,11 +1,14 @@
 from __future__ import annotations
-from pathlib import Path
+
 from collections.abc import Callable
 from functools import cached_property
+from pathlib import Path
 from typing import Any, Self, override
+
 import yaml
-from challtools.validator import ConfigValidator
+
 from challtools.types import JsonDict, ValidatorMessage
+from challtools.validator import ConfigValidator
 
 
 class _GeneratedCachedProperty[T]:

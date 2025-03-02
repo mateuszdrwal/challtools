@@ -1,19 +1,21 @@
 from __future__ import annotations
-import re
-from copy import deepcopy
+
+import importlib.resources
 import json
+import re
+from collections.abc import Generator
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, cast
-from collections.abc import Generator
-import importlib.resources
-import yaml
-from jsonschema import validate, ValidationError, Draft7Validator, validators
-from jsonschema.protocols import Validator
-from challtools.types import (
-    ValidatorMessage,
-    JsonDict,
-)
 
+import yaml
+from jsonschema import Draft7Validator, ValidationError, validate, validators
+from jsonschema.protocols import Validator
+
+from challtools.types import (
+    JsonDict,
+    ValidatorMessage,
+)
 
 with (importlib.resources.files("challtools") / "codes.yml").open() as f:
     codes = yaml.safe_load(f)

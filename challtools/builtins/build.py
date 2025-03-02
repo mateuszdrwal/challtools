@@ -1,5 +1,5 @@
-from challtools.utils import get_valid_config, build_chall
 from challtools.constants import *
+from challtools.utils import build_chall, get_valid_config
 
 
 def run(args):

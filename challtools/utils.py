@@ -1,16 +1,18 @@
+import hashlib
+import json
 import os
 import re
 import subprocess
 import sys
-import hashlib
-import json
 from pathlib import Path
-import yaml
+
 import docker
 import requests
-from challtools.validator import ConfigValidator
-from challtools.exceptions import CriticalException
+import yaml
+
 from challtools.constants import *
+from challtools.exceptions import CriticalException
+from challtools.validator import ConfigValidator
 
 
 def process_messages(messages, verbose=False):

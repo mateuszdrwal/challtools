@@ -1,10 +1,12 @@
 import uuid
 from pathlib import Path
+
 import yaml
+
+from challtools.constants import *
+from challtools.exceptions import CriticalException
 from challtools.utils import load_ctf_config, process_messages
 from challtools.validator import ConfigValidator
-from challtools.exceptions import CriticalException
-from challtools.constants import *
 
 
 def run(args):

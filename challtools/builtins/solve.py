@@ -1,13 +1,14 @@
 import sys
 import time
+
+from challtools.constants import *
+from challtools.exceptions import CriticalException
 from challtools.utils import (
     get_valid_config,
     start_chall,
     start_solution,
     validate_solution_output,
 )
-from challtools.exceptions import CriticalException
-from challtools.constants import *
 
 
 def run(args):

@@ -34,3 +34,6 @@ reportExplicitAny = false
 
 [tool.pylint."messages control"]
 disable = ["line-too-long", "missing-module-docstring", "too-few-public-methods", "fixme"]
+
+[tool.isort]
+profile = "black"

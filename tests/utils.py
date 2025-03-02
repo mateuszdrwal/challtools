@@ -1,6 +1,7 @@
 import os
 import shutil
 from pathlib import Path
+
 from challtools.entry import main
 
 testpath = Path(__file__).parent

@@ -1,9 +1,11 @@
 import os
 from pathlib import Path
-import yaml
+
 import pytest
+import yaml
+from utils import inittemplatepath, main_wrapper, populate_dir
+
 from challtools.utils import build_chall, get_valid_config
-from utils import populate_dir, main_wrapper, inittemplatepath
 
 
 class Test_allchalls:
