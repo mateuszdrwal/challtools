@@ -5,6 +5,7 @@ from functools import cached_property
 from typing import Any, Self, override
 import yaml
 from challtools.validator import ConfigValidator
+from challtools.types import JsonDict, ValidatorMessage
 
 
 class _GeneratedCachedProperty[T]:
@@ -70,10 +71,10 @@ class _Challenge:
         self.normalized_config = validator.normalized_config
 
     valid: _GeneratedCachedProperty[Self] | bool = _GeneratedCachedProperty(_validate)
-    validator_messages: (
-        _GeneratedCachedProperty[Self] | list[dict[str, str | int | None]]
-    ) = _GeneratedCachedProperty(_validate)
-    normalized_config: _GeneratedCachedProperty[Self] | dict[str, Any] = (
+    validator_messages: _GeneratedCachedProperty[Self] | list[ValidatorMessage] = (
+        _GeneratedCachedProperty(_validate)
+    )
+    normalized_config: _GeneratedCachedProperty[Self] | JsonDict | None = (
         _GeneratedCachedProperty(_validate)
     )
 
@@ -81,7 +82,7 @@ class _Challenge:
     def __repr__(self):
         if not self.valid:
             return f"<Challenge at {self.config_path.parent}>"
-        return f'<Challenge "{self.normalized_config["title"]}">'
+        return f'<Challenge "{self.normalized_config["title"]}">'  # pyright: ignore [reportOptionalSubscript] # if self.valid, self.normalized_config cannot be None
 
 
 class _CTF:
