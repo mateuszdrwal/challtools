@@ -28,3 +28,10 @@ urls = { repository = "https://github.com/mateuszdrwal/challtools" }
 dynamic = ["version"]
 
 [tool.setuptools_scm]
+
+[tool.basedpyright]
+reportAny = false
+reportExplicitAny = false
+
+[tool.pylint."messages control"]
+disable = ["line-too-long", "missing-module-docstring", "too-few-public-methods"]
