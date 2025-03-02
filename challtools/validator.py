@@ -1,11 +1,18 @@
-import os
+import re
 from copy import deepcopy
 import json
 from pathlib import Path
+from typing import Any, cast
+from collections.abc import Generator
 import importlib_resources
 import yaml
-import re
 from jsonschema import validate, ValidationError, Draft7Validator, validators
+from jsonschema.protocols import Validator
+from challtools.types import (
+    ValidatorMessage,
+    JsonDict,
+)
+
 
 with (importlib_resources.files("challtools") / "codes.yml").open() as f:
     codes = yaml.safe_load(f)
@@ -14,57 +21,57 @@ with (importlib_resources.files("challtools") / "challenge.schema.json").open() 
     schema = json.load(f)
 
 
-def is_url(s):
+def is_url(s: str):
+    """Checks if a string is a http or https URL."""
     return s.startswith("http://") or s.startswith("https://")
 
 
-def extend_with_default(validator_class):
+def _extend_with_default(validator_class: type[Draft7Validator]) -> type[Validator]:
     validate_properties = validator_class.VALIDATORS["properties"]
 
-    def set_defaults(validator, properties, instance, schema2):
+    def set_defaults(
+        validator: Validator,
+        properties: dict[str, JsonDict],
+        instance: JsonDict | None,
+        schema2: dict[str, JsonDict],
+    ) -> Generator[ValidationError, Any, None]:
         if instance is not None:
             for property2, subschema in properties.items():
                 if "default" in subschema:
-                    instance.setdefault(property2, subschema["default"])
+                    _ = instance.setdefault(property2, subschema["default"])
 
-        for error in validate_properties(
+        yield from validate_properties(
             validator,
             properties,
             instance,
             schema2,
-        ):
-            yield error
+        )
 
-    return validators.extend(
+    return validators.extend(  # pyright: ignore [reportUnknownMemberType, reportUnknownVariableType]
         validator_class,
         {"properties": set_defaults},
     )
 
 
-DefaultValidatingDraft7Validator = extend_with_default(Draft7Validator)
+DefaultValidatingDraft7Validator = _extend_with_default(Draft7Validator)
 
 
 class ConfigValidator:
-    def __init__(self, config, ctf_config=None, challdir=None):
-        if not isinstance(config, dict):
-            raise ValueError("Config parameter needs to be a dict")
-        self.messages = []
-        self.config = {}
-        self.normalized_config = {}
-        self.config = config
-        self.ctf_config = ctf_config
-        self.challdir = challdir
+    """A class to validate challenge configurations."""
 
-    # def normalize_challenge(self):
-    #     """Returns a version of the challenge config where all defaults have been substituted in and fields expecting an array are formatted with an array, even if only one element without the array was provided.
+    def __init__(
+        self,
+        config: JsonDict,
+        ctf_config: JsonDict | None = None,
+        challdir: Path | None = None,
+    ):
+        self.messages: list[ValidatorMessage] = []
+        self.normalized_config: JsonDict | None = None
+        self.config: JsonDict = config
+        self.ctf_config: JsonDict | None = ctf_config
+        self.challdir: Path | None = challdir
 
-    #     Returns:
-    #         dict: A normalized version of the challenge config
-    #     """
-
-    #     return DefaultValidatingDraft7Validator(schema).validate(self.normalized_config)
-
-    def validate(self):
+    def validate(self) -> tuple[bool, list[ValidatorMessage]]:
         """Validates the challenge config and returns a list of messages.
 
         Returns:
@@ -81,8 +88,6 @@ class ConfigValidator:
                 ``message`` (*str*)
                     A longer description of this message
         """
-
-        from pprint import pprint
 
         # TODO A001
 
@@ -138,26 +143,31 @@ class ConfigValidator:
                 predefined_service["port"] = str(predefined_service["port"])
         # convert service into deployment
         if self.normalized_config["service"]:
-            self.normalized_config["deployment"] = {
-                "type": "docker",
-                "containers": {
-                    "challenge": {  # TODO change the name of this container to "default" in the spec and here
-                        "image": self.normalized_config["service"]["image"],
-                        "services": [
-                            {
-                                "type": self.normalized_config["service"]["type"],
-                                "internal_port": self.normalized_config["service"][
-                                    "internal_port"
-                                ],
-                            }
-                        ],
-                        "extra_exposed_ports": [],
-                        "privileged": self.normalized_config["service"]["privileged"],
+            self.normalized_config["deployment"] = cast(
+                JsonDict,
+                {
+                    "type": "docker",
+                    "containers": {
+                        "challenge": {  # TODO change the name of this container to "default" in the spec and here
+                            "image": self.normalized_config["service"]["image"],
+                            "services": [
+                                {
+                                    "type": self.normalized_config["service"]["type"],
+                                    "internal_port": self.normalized_config["service"][
+                                        "internal_port"
+                                    ],
+                                }
+                            ],
+                            "extra_exposed_ports": [],
+                            "privileged": self.normalized_config["service"][
+                                "privileged"
+                            ],
+                        },
                     },
+                    "networks": {},
+                    "volumes": {},
                 },
-                "networks": {},
-                "volumes": {},
-            }
+            )
             if self.normalized_config["service"].get("external_port"):
                 self.normalized_config["deployment"]["containers"]["challenge"][
                     "services"
@@ -185,7 +195,7 @@ class ConfigValidator:
                 self._raise_code("A005", "flags", flag=flag["flag"])
 
         # A006 duplicate custom_service_types type
-        type_names = set()
+        type_names: set[str] = set()
         for custom_service_type in self.normalized_config["custom_service_types"]:
             type_name = custom_service_type["type"]
             if type_name in type_names:
@@ -222,7 +232,7 @@ class ConfigValidator:
 
         ### CTF config validation
         # if no ctf config was provided to the validator we assume it does not exist and issue B001. not ideal as there might be other reasons for why the ctf config is not provided, but works for now
-        if self.ctf_config == None:
+        if self.ctf_config is None:
             self._raise_code("B001")
         else:
             # B002 validate correct challenge names
@@ -240,7 +250,7 @@ class ConfigValidator:
             # B004 validate correct flag format prefix
             if (
                 "flag_format_prefixes" in self.ctf_config
-                and self.normalized_config["flag_format_prefix"] != None
+                and self.normalized_config["flag_format_prefix"] is not None
                 and self.normalized_config["flag_format_prefix"]
                 not in self.ctf_config["flag_format_prefixes"]
             ):
@@ -250,9 +260,13 @@ class ConfigValidator:
                     prefix=self.normalized_config["flag_format_prefix"],
                 )
 
-        return True, self.messages
+        return (
+            max(self.messages, key=lambda m: m["level"])["level"] < 5
+            if self.messages
+            else True
+        ), self.messages
 
-    def _raise_code(self, code, field=None, **formatting):
+    def _raise_code(self, code: str, field: str | None = None, **formatting: str):
         """Adds a formatted message entry into the messages array.
 
         Args:
