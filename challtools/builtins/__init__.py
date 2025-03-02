@@ -1,5 +1,6 @@
 import argparse
 
+from challtools import __version__
 from challtools.plugin import Plugin, lazy_runner
 
 

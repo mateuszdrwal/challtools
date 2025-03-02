@@ -8,6 +8,9 @@ class Plugin:
     Base class for all challtools plugins.
     """
 
+    # The priority of the plugin, higher priority plugins are loaded first
+    priority: int = 0
+
     def __init__(
         self, parser: argparse.ArgumentParser, subparsers: argparse._SubParsersAction
     ):

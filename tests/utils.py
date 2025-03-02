@@ -22,9 +22,10 @@ def populate_dir(path, template):
 
 
 def main_wrapper(args):
+    exit_code = 0
     try:
-        exit_code = main(args)
+        main(args)
     except SystemExit as e:
-        exit_code = e.code
+        exit_code = e.code or 0
 
     return exit_code

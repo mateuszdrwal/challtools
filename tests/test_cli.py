@@ -199,3 +199,36 @@ class Test_init:
             "default - a generic template suitable for any type of challenge"
             in capsys.readouterr().out.lower()
         )
+
+
+class Test_plugins:
+    def test_stock_version(self, capsys):
+        assert main_wrapper(["-v"]) == 0
+        out = capsys.readouterr().out.strip()
+        assert "challtools" in out
+        assert "Plugins:" in out
+        assert "builtins" in out
+        assert "unknown version" not in out
+        assert len(out.split("\n")) == 4
+
+    def test_plugins_dir_version(self, tmp_path, capsys):
+        os.chdir(tmp_path)
+        populate_dir(tmp_path, "plugin_dir")
+        assert main_wrapper(["-v"]) == 0
+        out = capsys.readouterr().out.strip()
+        assert "test_plugin" in out
+        assert len(out.split("\n")) == 5
+
+    def test_plugins_dir_subdir_version(self, tmp_path, capsys):
+        populate_dir(tmp_path, "plugin_dir")
+        os.chdir(tmp_path / "subdir")
+        assert main_wrapper(["-v"]) == 0
+        out = capsys.readouterr().out.strip()
+        assert "test_plugin" in out
+        assert len(out.split("\n")) == 5
+
+    def test_plugins_dir_execution(self, tmp_path, capsys):
+        os.chdir(tmp_path)
+        populate_dir(tmp_path, "plugin_dir")
+        assert main_wrapper(["test_command"]) == 0
+        assert "hello test plugin" in capsys.readouterr().out
