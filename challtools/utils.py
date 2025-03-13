@@ -585,7 +585,7 @@ def start_chall(config):
             chall_id=config["challenge_id"],
         )  # TODO check that the container hasn't already been started
 
-        if tag not in tag_list:
+        if tag not in tag_list and f'docker.io/library/{tag}' not in tag_list:
             raise CriticalException(
                 f'Cannot find image "{tag}". Make sure you have built the required docker images using "challtools build" before attempting to start them.'
             )
