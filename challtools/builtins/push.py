@@ -4,6 +4,8 @@ import urllib.parse
 from pathlib import Path
 
 import requests
+from minio import Minio
+from minio.error import S3Error
 
 from challtools.constants import *
 from challtools.exceptions import CriticalException
@@ -44,67 +46,75 @@ def run(args):
             print(f"{BOLD}Nothing to build{CLEAR}")
 
     if not args.skip_files:
-        try:
-            import boto3
-            from botocore.exceptions import BotoCoreError, ClientError
-        except ImportError:
-            raise CriticalException("boto3 is not installed!")
-
         if not config["downloadable_files"]:
             print(f"{BOLD}No files defined, nothing to upload{CLEAR}")
         else:
+            custom_cfg = ctf_config.get("custom", {})
 
-            if not ctf_config.get("custom", {}).get("s3_bucket_name"):
+            bucket_name = custom_cfg.get("s3_bucket_name") or custom_cfg.get("bucket")
+            if not bucket_name:
                 raise CriticalException(
-                    "Bucket not configured in the CTF configuration file"
+                    "S3 bucket not configured in the CTF configuration file"
                 )
 
-            if not ctf_config.get("custom", {}).get("s3_key"):
-                raise CriticalException(
-                    "Bucket key not configured in the CTF configuration file"
-                )
-
-            if not ctf_config.get("custom", {}).get("s3_secret"):
-                raise CriticalException(
-                    "Bucket secret not configured in the CTF configuration file"
-                )
-
-            if not ctf_config.get("custom", {}).get("s3_endpoint"):
-                raise CriticalException(
-                    "Bucket endpoint not configured in the CTF configuration file"
-                )
-
-            if not ctf_config.get("custom", {}).get("secret"):
+            if not custom_cfg.get("secret"):
                 raise CriticalException(
                     "Secret not configured in the CTF configuration file"
                 )
 
-            bucket_name = ctf_config["custom"]["s3_bucket_name"]
-            try:
-                s3_client = boto3.client(
-                    "s3",
-                    aws_access_key_id=ctf_config.get("custom", {}).get("s3_key"),
-                    aws_secret_access_key=ctf_config.get("custom", {}).get("s3_secret"),
-                    endpoint_url=ctf_config.get("custom", {}).get("s3_endpoint"),
-                    region_name="us-east-1",
-                    verify=False,
+            endpoint = custom_cfg.get("s3_endpoint")
+            if not endpoint:
+                raise CriticalException(
+                    "S3 endpoint not configured in the CTF configuration file"
                 )
-            except (BotoCoreError, ClientError) as exc:
-                raise CriticalException(f"Could not create S3 client: {exc}") from exc
+
+            access_key = custom_cfg.get("s3_key")
+            secret_key = custom_cfg.get("s3_secret")
+            if not access_key or not secret_key:
+                raise CriticalException(
+                    "S3 access key/secret not configured in the CTF configuration file"
+                )
+
+            parsed_endpoint = urllib.parse.urlparse(endpoint)
+            if parsed_endpoint.scheme:
+                endpoint_host = parsed_endpoint.netloc or parsed_endpoint.path
+                secure = parsed_endpoint.scheme == "https"
+                public_endpoint = endpoint.rstrip("/")
+            else:
+                endpoint_host = endpoint
+                secure = True
+                public_endpoint = f"https://{endpoint.strip('/')}"
+
+            try:
+                s3_client = Minio(
+                    endpoint_host,
+                    access_key=access_key,
+                    secret_key=secret_key,
+                    secure=secure,
+                )
+            except Exception as exc:
+                raise CriticalException(
+                    f"Could not create MinIO client: {exc}"
+                ) from exc
             folder = hashlib.sha256(
-                f"{ctf_config['custom']['secret']}-{config['challenge_id']}".encode()
+                f"{custom_cfg['secret']}-{config['challenge_id']}".encode()
             ).hexdigest()
 
             try:
-                paginator = s3_client.get_paginator("list_objects_v2")
-                for page in paginator.paginate(Bucket=bucket_name, Prefix=f"{folder}/"):
-                    for obj in page.get("Contents", []):
-                        key = obj["Key"]
-                        print(f"{BOLD}Deleting old {key.split('/')[-1]}...{CLEAR}")
-                        s3_client.delete_object(Bucket=bucket_name, Key=key)
-            except (BotoCoreError, ClientError) as exc:
+                objects = s3_client.list_objects(
+                    bucket_name, prefix=f"{folder}/", recursive=True
+                )
+                for obj in objects:
+                    key = obj.object_name
+                    print(f"{BOLD}Deleting old {key.split('/')[-1]}...{CLEAR}")
+                    s3_client.remove_object(bucket_name, key)
+            except S3Error as exc:
                 raise CriticalException(
                     f"Could not clean up existing S3 objects: {exc}"
+                ) from exc
+            except Exception as exc:
+                raise CriticalException(
+                    f"Unexpected error cleaning S3 objects: {exc}"
                 ) from exc
 
             filepaths = []
@@ -125,18 +135,17 @@ def run(args):
                 key = f"{folder}/{path.name}"
                 print(f"{BOLD}Uploading {path.name}...{CLEAR}")
                 try:
-                    with path.open("rb") as fp:
-                        s3_client.upload_fileobj(fp, bucket_name, key)
-                except (BotoCoreError, ClientError) as exc:
+                    s3_client.fput_object(bucket_name, key, str(path))
+                except S3Error as exc:
                     raise CriticalException(
                         f"Failed to upload {path.name} to S3: {exc}"
                     ) from exc
+                except Exception as exc:
+                    raise CriticalException(
+                        f"Unexpected error uploading {path.name} to S3: {exc}"
+                    ) from exc
 
-                endpoint = s3_client.meta.endpoint_url
-                if endpoint:
-                    file_urls.append(f"{endpoint.rstrip('/')}/{bucket_name}/{key}")
-                else:
-                    raise CriticalException("Could not determine S3 endpoint URL")
+                file_urls.append(f"{public_endpoint}/{bucket_name}/{key}")
 
     if not args.skip_container_push and config["deployment"]:
         try:
