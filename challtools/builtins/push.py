@@ -45,17 +45,33 @@ def run(args):
 
     if not args.skip_files:
         try:
-            from google.cloud import storage
+            import boto3
+            from botocore.exceptions import BotoCoreError, ClientError
         except ImportError:
-            raise CriticalException("google-cloud-storage is not installed!")
+            raise CriticalException("boto3 is not installed!")
 
         if not config["downloadable_files"]:
             print(f"{BOLD}No files defined, nothing to upload{CLEAR}")
         else:
 
-            if not ctf_config.get("custom", {}).get("bucket"):
+            if not ctf_config.get("custom", {}).get("s3_bucket_name"):
                 raise CriticalException(
                     "Bucket not configured in the CTF configuration file"
+                )
+
+            if not ctf_config.get("custom", {}).get("s3_key"):
+                raise CriticalException(
+                    "Bucket key not configured in the CTF configuration file"
+                )
+
+            if not ctf_config.get("custom", {}).get("s3_secret"):
+                raise CriticalException(
+                    "Bucket secret not configured in the CTF configuration file"
+                )
+
+            if not ctf_config.get("custom", {}).get("s3_endpoint"):
+                raise CriticalException(
+                    "Bucket endpoint not configured in the CTF configuration file"
                 )
 
             if not ctf_config.get("custom", {}).get("secret"):
@@ -63,15 +79,33 @@ def run(args):
                     "Secret not configured in the CTF configuration file"
                 )
 
-            storage_client = storage.Client()
-            bucket = storage_client.bucket(ctf_config["custom"]["bucket"])
+            bucket_name = ctf_config["custom"]["s3_bucket_name"]
+            try:
+                s3_client = boto3.client(
+                    "s3",
+                    aws_access_key_id=ctf_config.get("custom", {}).get("s3_key"),
+                    aws_secret_access_key=ctf_config.get("custom", {}).get("s3_secret"),
+                    endpoint_url=ctf_config.get("custom", {}).get("s3_endpoint"),
+                    region_name="us-east-1",
+                    verify=False,
+                )
+            except (BotoCoreError, ClientError) as exc:
+                raise CriticalException(f"Could not create S3 client: {exc}") from exc
             folder = hashlib.sha256(
                 f"{ctf_config['custom']['secret']}-{config['challenge_id']}".encode()
             ).hexdigest()
 
-            for blob in bucket.list_blobs(prefix=folder):
-                print(f"{BOLD}Deleting old {blob.name.split('/')[-1]}...{CLEAR}")
-                blob.delete()
+            try:
+                paginator = s3_client.get_paginator("list_objects_v2")
+                for page in paginator.paginate(Bucket=bucket_name, Prefix=f"{folder}/"):
+                    for obj in page.get("Contents", []):
+                        key = obj["Key"]
+                        print(f"{BOLD}Deleting old {key.split('/')[-1]}...{CLEAR}")
+                        s3_client.delete_object(Bucket=bucket_name, Key=key)
+            except (BotoCoreError, ClientError) as exc:
+                raise CriticalException(
+                    f"Could not clean up existing S3 objects: {exc}"
+                ) from exc
 
             filepaths = []
             for file in config["downloadable_files"]:
@@ -88,10 +122,21 @@ def run(args):
                 if not path.exists():
                     raise CriticalException(f"file {path} does not exist!")
 
+                key = f"{folder}/{path.name}"
                 print(f"{BOLD}Uploading {path.name}...{CLEAR}")
-                blob = bucket.blob(folder + "/" + path.name)
-                blob.upload_from_file(path.open("rb"))
-                file_urls.append(blob.public_url)
+                try:
+                    with path.open("rb") as fp:
+                        s3_client.upload_fileobj(fp, bucket_name, key)
+                except (BotoCoreError, ClientError) as exc:
+                    raise CriticalException(
+                        f"Failed to upload {path.name} to S3: {exc}"
+                    ) from exc
+
+                endpoint = s3_client.meta.endpoint_url
+                if endpoint:
+                    file_urls.append(f"{endpoint.rstrip('/')}/{bucket_name}/{key}")
+                else:
+                    raise CriticalException("Could not determine S3 endpoint URL")
 
     if not args.skip_container_push and config["deployment"]:
         try:
@@ -186,7 +231,9 @@ def run(args):
     )
 
     if r.status_code != 200:
-        raise CriticalException(f"Request failed with status {r.status_code}")
+        raise CriticalException(
+            f"Request failed with status {r.status_code} - {r.json().get('message','')}"
+        )
 
     print(f"{SUCCESS}Challenge pushed!{CLEAR}")
     return 0
