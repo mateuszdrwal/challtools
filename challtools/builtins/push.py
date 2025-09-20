@@ -4,6 +4,8 @@ import urllib.parse
 from pathlib import Path
 
 import requests
+from minio import Minio
+from minio.error import S3Error
 
 from challtools.constants import *
 from challtools.exceptions import CriticalException
@@ -44,34 +46,76 @@ def run(args):
             print(f"{BOLD}Nothing to build{CLEAR}")
 
     if not args.skip_files:
-        try:
-            from google.cloud import storage
-        except ImportError:
-            raise CriticalException("google-cloud-storage is not installed!")
-
         if not config["downloadable_files"]:
             print(f"{BOLD}No files defined, nothing to upload{CLEAR}")
         else:
+            custom_cfg = ctf_config.get("custom", {})
 
-            if not ctf_config.get("custom", {}).get("bucket"):
+            bucket_name = custom_cfg.get("s3_bucket_name") or custom_cfg.get("bucket")
+            if not bucket_name:
                 raise CriticalException(
-                    "Bucket not configured in the CTF configuration file"
+                    "S3 bucket not configured in the CTF configuration file"
                 )
 
-            if not ctf_config.get("custom", {}).get("secret"):
+            if not custom_cfg.get("secret"):
                 raise CriticalException(
                     "Secret not configured in the CTF configuration file"
                 )
 
-            storage_client = storage.Client()
-            bucket = storage_client.bucket(ctf_config["custom"]["bucket"])
+            endpoint = custom_cfg.get("s3_endpoint")
+            if not endpoint:
+                raise CriticalException(
+                    "S3 endpoint not configured in the CTF configuration file"
+                )
+
+            access_key = custom_cfg.get("s3_key")
+            secret_key = custom_cfg.get("s3_secret")
+            if not access_key or not secret_key:
+                raise CriticalException(
+                    "S3 access key/secret not configured in the CTF configuration file"
+                )
+
+            parsed_endpoint = urllib.parse.urlparse(endpoint)
+            if parsed_endpoint.scheme:
+                endpoint_host = parsed_endpoint.netloc or parsed_endpoint.path
+                secure = parsed_endpoint.scheme == "https"
+                public_endpoint = endpoint.rstrip("/")
+            else:
+                endpoint_host = endpoint
+                secure = True
+                public_endpoint = f"https://{endpoint.strip('/')}"
+
+            try:
+                s3_client = Minio(
+                    endpoint_host,
+                    access_key=access_key,
+                    secret_key=secret_key,
+                    secure=secure,
+                )
+            except Exception as exc:
+                raise CriticalException(
+                    f"Could not create MinIO client: {exc}"
+                ) from exc
             folder = hashlib.sha256(
-                f"{ctf_config['custom']['secret']}-{config['challenge_id']}".encode()
+                f"{custom_cfg['secret']}-{config['challenge_id']}".encode()
             ).hexdigest()
 
-            for blob in bucket.list_blobs(prefix=folder):
-                print(f"{BOLD}Deleting old {blob.name.split('/')[-1]}...{CLEAR}")
-                blob.delete()
+            try:
+                objects = s3_client.list_objects(
+                    bucket_name, prefix=f"{folder}/", recursive=True
+                )
+                for obj in objects:
+                    key = obj.object_name
+                    print(f"{BOLD}Deleting old {key.split('/')[-1]}...{CLEAR}")
+                    s3_client.remove_object(bucket_name, key)
+            except S3Error as exc:
+                raise CriticalException(
+                    f"Could not clean up existing S3 objects: {exc}"
+                ) from exc
+            except Exception as exc:
+                raise CriticalException(
+                    f"Unexpected error cleaning S3 objects: {exc}"
+                ) from exc
 
             filepaths = []
             for file in config["downloadable_files"]:
@@ -88,10 +132,20 @@ def run(args):
                 if not path.exists():
                     raise CriticalException(f"file {path} does not exist!")
 
+                key = f"{folder}/{path.name}"
                 print(f"{BOLD}Uploading {path.name}...{CLEAR}")
-                blob = bucket.blob(folder + "/" + path.name)
-                blob.upload_from_file(path.open("rb"))
-                file_urls.append(blob.public_url)
+                try:
+                    s3_client.fput_object(bucket_name, key, str(path))
+                except S3Error as exc:
+                    raise CriticalException(
+                        f"Failed to upload {path.name} to S3: {exc}"
+                    ) from exc
+                except Exception as exc:
+                    raise CriticalException(
+                        f"Unexpected error uploading {path.name} to S3: {exc}"
+                    ) from exc
+
+                file_urls.append(f"{public_endpoint}/{bucket_name}/{key}")
 
     if not args.skip_container_push and config["deployment"]:
         try:
@@ -186,7 +240,9 @@ def run(args):
     )
 
     if r.status_code != 200:
-        raise CriticalException(f"Request failed with status {r.status_code}")
+        raise CriticalException(
+            f"Request failed with status {r.status_code} - {r.json().get('message','')}"
+        )
 
     print(f"{SUCCESS}Challenge pushed!{CLEAR}")
     return 0
