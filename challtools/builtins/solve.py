@@ -39,6 +39,7 @@ def run(args):
         print(f"{BOLD}Aborting...{CLEAR}")
         for container in containers:
             container.kill()
+            container.remove()
         solution_container.kill()
         solution_container.remove()
         return 1
@@ -47,6 +48,7 @@ def run(args):
 
     for container in containers:
         container.kill()
+        container.remove()
 
     output = solution_container.logs()
     solution_container.remove()
