@@ -644,7 +644,7 @@ def start_chall(config):
             detach=True,
             environment={"TEST": "true"},
             privileged=container_config["privileged"],
-            name=container_config.get("container_name", "")
+            name=container_name
             # TODO volumes
         )
 
