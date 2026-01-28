@@ -298,16 +298,6 @@
                             "image": {
                                 "type": "string"
                             },
-                            "container_name": {
-                                "type": "string"
-                            },
-                            "environment": {
-                                "type": "array",
-                                "default": [],
-                                "items": {
-                                    "type": "string"
-                                }
-                            },
                             "services": {
                                 "type": [
                                     "array"

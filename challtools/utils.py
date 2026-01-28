@@ -642,7 +642,7 @@ def start_chall(config):
             tag,
             ports=ports,
             detach=True,
-            environment=container_config.get("environment", []),
+            environment={"TEST": "true"},
             privileged=container_config["privileged"],
             name=container_config.get("container_name", "")
             # TODO volumes
