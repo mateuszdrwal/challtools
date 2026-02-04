@@ -138,6 +138,21 @@ class Test_compose:
             }
         }
 
+    def test_custom_container_name(self, tmp_path):
+        populate_dir(tmp_path, "trivial_tcp_custom_container_name")
+        assert main_wrapper(["compose", "--restart-policy", "always"]) == 0
+        assert Path("compose.yml").exists()
+        compose = yaml.safe_load(Path("compose.yml").read_text())
+        assert len(compose) == 1
+        assert compose.get("services") == {
+            "custom-container-name": {
+                "build": "container",
+                "ports": ["50000:1337"],
+                "privileged": True,
+                "restart": "always",
+            }
+        }
+
 
 class Test_ensureid:
     def test_ok(self, tmp_path, capsys):
