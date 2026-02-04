@@ -5,7 +5,7 @@ import pytest
 import yaml
 from utils import inittemplatepath, main_wrapper, populate_dir
 
-from challtools.utils import build_chall, get_valid_config
+from challtools.utils import build_chall, get_valid_config, create_docker_name
 
 
 class Test_allchalls:
@@ -130,7 +130,7 @@ class Test_compose:
         compose = yaml.safe_load(Path("compose.yml").read_text())
         assert len(compose) == 1
         assert compose.get("services") == {
-            "challenge": {
+            create_docker_name("Challtools test", container_name="challenge", chall_id=None): {
                 "build": "container",
                 "ports": ["50000:1337"],
                 "privileged": True,

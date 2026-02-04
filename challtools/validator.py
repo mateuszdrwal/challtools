@@ -16,6 +16,7 @@ from challtools.types import (
     JsonDict,
     ValidatorMessage,
 )
+from challtools.utils import create_docker_name
 
 with (importlib.resources.files("challtools") / "codes.yml").open() as f:
     codes = yaml.safe_load(f)
@@ -146,12 +147,13 @@ class ConfigValidator:
                 predefined_service["port"] = str(predefined_service["port"])
         # convert service into deployment
         if self.normalized_config["service"]:
+            container_name = create_docker_name(self.normalized_config["title"], container_name="challenge", chall_id=self.normalized_config["challenge_id"])
             self.normalized_config["deployment"] = cast(
                 JsonDict,
                 {
                     "type": "docker",
                     "containers": {
-                        "challenge": {  # TODO change the name of this container to "default" in the spec and here
+                        container_name: {
                             "image": self.normalized_config["service"]["image"],
                             "services": [
                                 {
@@ -172,7 +174,7 @@ class ConfigValidator:
                 },
             )
             if self.normalized_config["service"].get("external_port"):
-                self.normalized_config["deployment"]["containers"]["challenge"][
+                self.normalized_config["deployment"]["containers"][container_name][
                     "services"
                 ][0]["external_port"] = self.normalized_config["service"][
                     "external_port"

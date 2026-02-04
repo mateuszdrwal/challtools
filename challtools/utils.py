@@ -12,7 +12,6 @@ import yaml
 
 from challtools.constants import *
 from challtools.exceptions import CriticalException
-from challtools.validator import ConfigValidator
 
 
 def process_messages(messages, verbose=False):
@@ -182,6 +181,7 @@ def get_valid_config(workdir=None, search=True, cd=True):
     Raises:
         CriticalException: If there are critical validation errors
     """
+    from challtools.validator import ConfigValidator
     config = load_config(
         search=search, cd=cd, **{"workdir": workdir} if workdir else {}
     )
@@ -482,11 +482,7 @@ def build_docker_images(config, client):
         print(f"{BOLD}Processing container {container_name}...{CLEAR}")
         build_image(
             container["image"],
-            create_docker_name(
-                config["title"],
-                container_name=container_name,
-                chall_id=config["challenge_id"],
-            ),
+            container_name,
             client,
         )
 
@@ -579,11 +575,7 @@ def start_chall(config):
     ]
 
     for container_name, container in config["deployment"]["containers"].items():
-        tag = create_docker_name(
-            config["title"],
-            container_name=container_name,
-            chall_id=config["challenge_id"],
-        )  # TODO check that the container hasn't already been started
+        tag = container_name # TODO check that the container hasn't already been started
 
         if tag not in tag_list and f'docker.io/library/{tag}' not in tag_list:
             raise CriticalException(
@@ -612,11 +604,7 @@ def start_chall(config):
     )
 
     for container_name, container_config in config["deployment"]["containers"].items():
-        tag = create_docker_name(
-            config["title"],
-            container_name=container_name,
-            chall_id=config["challenge_id"],
-        )
+        tag = container_name
 
         ports = {}
         for service in container_config.get("services", []):
@@ -809,16 +797,8 @@ def generate_compose(configs, is_global=False, restart_policy="no", start_port=5
             if container["privileged"]:
                 compose_service["privileged"] = True
 
-            if is_global:
-                compose["services"][
-                    create_docker_name(
-                        config["title"],
-                        container_name=name,
-                        chall_id=config["challenge_id"],
-                    )
-                ] = compose_service
-            else:
-                compose["services"][name] = compose_service
+            compose["services"][name] = compose_service # TODO add warning/error on container name collision?
+                
 
     if not compose["volumes"]:
         del compose["volumes"]
