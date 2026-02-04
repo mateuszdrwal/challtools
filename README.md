@@ -104,7 +104,7 @@ positional arguments:
     build               Builds a challenge by running its build script and building docker images
     start               Starts a challenge by running its docker images
     solve               Starts a challenge by running its docker images, and procedes to solve it using the solution container
-    compose             Writes a docker-compose.yml file to the challenge directory which can be used to run all challenge services
+    compose             Writes a compose.yml file to the challenge directory which can be used to run all challenge services
     ensureid            Checks if a challenge has a challenge ID, and if not, generates and adds one
     push                Push a challenge to the ctf platform
     init                Initialize a directory with template challenge files

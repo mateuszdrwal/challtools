@@ -86,7 +86,7 @@ class Solve(Plugin):
 
 class Compose(Plugin):
     def __init__(self, parser, subparsers):
-        compose_desc = "Writes a docker-compose.yml file to the challenge directory which can be used to run all challenge services"
+        compose_desc = "Writes a compose.yml file to the challenge directory which can be used to run all challenge services"
         compose_parser = subparsers.add_parser(
             "compose", description=compose_desc, help=compose_desc
         )
@@ -94,7 +94,7 @@ class Compose(Plugin):
             "-a",
             "--all",
             action="store_true",
-            help="Write a single docker-compose.yml for all challenges in the CTF",
+            help="Write a single compose.yml for all challenges in the CTF",
         )
         compose_parser.add_argument(
             "--restart-policy",
