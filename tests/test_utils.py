@@ -2,6 +2,7 @@ import os
 import re
 from pathlib import Path
 
+import docker
 import pytest
 import yaml
 from utils import populate_dir
@@ -285,6 +286,15 @@ class Test_start_chall:
         config = get_valid_config()
         build_chall(config)
         containers, services = start_chall(config)
+        for container in containers:
+            try:
+                container.kill()
+            except docker.errors.APIError:
+                pass
+            try:
+                container.remove()
+            except docker.errors.APIError:
+                pass
         assert len(containers) == len(services) == 1
         assert re.match(r"nc 127.0.0.1 \d+", services[0])
 
