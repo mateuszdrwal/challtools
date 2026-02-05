@@ -15,7 +15,8 @@ deployment:
       image: container
       services:
         - type: website
-          internal_port: 1337
+          internal_port: 1338
+          external_port: 1338
       privileged: true
   networks: {}
   volumes: {}

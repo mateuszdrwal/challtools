@@ -190,7 +190,7 @@ class Test_compose:
                 chall_id=None,
             ): {
                 "build": f"chall1{os.sep}container",
-                "ports": ["50001:1337"],
+                "ports": ["1337:1337"],
                 "privileged": True,
                 "restart": "always",
             },
@@ -200,7 +200,7 @@ class Test_compose:
                 chall_id=None,
             ): {
                 "build": f"chall2{os.sep}container",
-                "ports": ["50000:1337"],
+                "ports": ["1338:1338"],
                 "privileged": True,
                 "restart": "always",
             },

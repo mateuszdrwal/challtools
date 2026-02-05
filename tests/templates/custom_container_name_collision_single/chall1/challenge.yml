@@ -16,6 +16,7 @@ deployment:
       services:
         - type: website
           internal_port: 1337
+          external_port: 1337
       privileged: true
   networks: {}
   volumes: {}
