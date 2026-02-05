@@ -724,6 +724,7 @@ def generate_compose(configs, is_global=False, restart_policy="no", start_port=5
     compose = {"services": {}, "volumes": {}, "networks": {}}
     next_port = start_port
     used_ports = set()
+    unique_containers = {}
 
     for path, config in configs:
         if not config["deployment"]:
@@ -800,9 +801,16 @@ def generate_compose(configs, is_global=False, restart_policy="no", start_port=5
             if container["privileged"]:
                 compose_service["privileged"] = True
 
+            if name in compose["services"]:
+                first_duplicate = config["title"]
+                second_duplicate = unique_containers[name]
+                raise CriticalException(
+                    f'More than one multi-container challenge ("{first_duplicate}" and "{second_duplicate}") is using the container name "{name}". Aborting.'
+                )
             compose["services"][
                 name
             ] = compose_service  # TODO add warning/error on container name collision?
+            unique_containers[name] = config["title"]
 
     if not compose["volumes"]:
         del compose["volumes"]
