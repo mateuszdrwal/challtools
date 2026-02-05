@@ -183,7 +183,6 @@ class Test_compose:
         assert Path("compose.yml").exists()
         compose = yaml.safe_load(Path("compose.yml").read_text())
         assert len(compose) == 1
-        exit()
         assert compose.get("services") == {
             create_docker_name(
                 "Challtools test 1",
