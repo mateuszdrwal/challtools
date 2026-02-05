@@ -130,7 +130,9 @@ class Test_compose:
         compose = yaml.safe_load(Path("compose.yml").read_text())
         assert len(compose) == 1
         assert compose.get("services") == {
-            create_docker_name("Challtools test", container_name="challenge", chall_id=None): {
+            create_docker_name(
+                "Challtools test", container_name="challenge", chall_id=None
+            ): {
                 "build": "container",
                 "ports": ["50000:1337"],
                 "privileged": True,

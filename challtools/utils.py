@@ -182,6 +182,7 @@ def get_valid_config(workdir=None, search=True, cd=True):
         CriticalException: If there are critical validation errors
     """
     from challtools.validator import ConfigValidator
+
     config = load_config(
         search=search, cd=cd, **{"workdir": workdir} if workdir else {}
     )
@@ -575,9 +576,11 @@ def start_chall(config):
     ]
 
     for container_name, container in config["deployment"]["containers"].items():
-        tag = container_name # TODO check that the container hasn't already been started
+        tag = (
+            container_name  # TODO check that the container hasn't already been started
+        )
 
-        if tag not in tag_list and f'docker.io/library/{tag}' not in tag_list:
+        if tag not in tag_list and f"docker.io/library/{tag}" not in tag_list:
             raise CriticalException(
                 f'Cannot find image "{tag}". Make sure you have built the required docker images using "challtools build" before attempting to start them.'
             )
@@ -632,7 +635,7 @@ def start_chall(config):
             detach=True,
             environment={"TEST": "true"},
             privileged=container_config["privileged"],
-            name=container_name
+            name=container_name,
             # TODO volumes
         )
 
@@ -797,8 +800,9 @@ def generate_compose(configs, is_global=False, restart_policy="no", start_port=5
             if container["privileged"]:
                 compose_service["privileged"] = True
 
-            compose["services"][name] = compose_service # TODO add warning/error on container name collision?
-                
+            compose["services"][
+                name
+            ] = compose_service  # TODO add warning/error on container name collision?
 
     if not compose["volumes"]:
         del compose["volumes"]

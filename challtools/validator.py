@@ -147,7 +147,11 @@ class ConfigValidator:
                 predefined_service["port"] = str(predefined_service["port"])
         # convert service into deployment
         if self.normalized_config["service"]:
-            container_name = create_docker_name(self.normalized_config["title"], container_name="challenge", chall_id=self.normalized_config["challenge_id"])
+            container_name = create_docker_name(
+                self.normalized_config["title"],
+                container_name="challenge",
+                chall_id=self.normalized_config["challenge_id"],
+            )
             self.normalized_config["deployment"] = cast(
                 JsonDict,
                 {
