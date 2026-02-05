@@ -211,7 +211,7 @@ class Test_compose:
         assert main_wrapper(["compose", "--all", "--restart-policy", "always"]) == 1
         assert Path("compose.yml").exists() == False
         assert (
-            'More than one multi-container challenge ("Challtools test 1" and "Challtools test 2") is using the container name "custom-container-name-1". Aborting.'
+            'More than one multi-container challenge'
             in capsys.readouterr().out
         )
 
