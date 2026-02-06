@@ -146,7 +146,7 @@ class ConfigValidator:
                 predefined_service["port"] = str(predefined_service["port"])
         # convert service into deployment
         if self.normalized_config["service"]:
-            container_name = "challenge" # TODO change the name of this container to "default" in the spec and here
+            container_name = "challenge"  # TODO change the name of this container to "default" in the spec and here
             self.normalized_config["deployment"] = cast(
                 JsonDict,
                 {

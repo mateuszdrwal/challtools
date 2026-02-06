@@ -586,7 +586,7 @@ def start_chall(config):
             chall_id=config["challenge_id"],
         )  # TODO check that the container hasn't already been started
 
-        if tag not in tag_list and f'docker.io/library/{tag}' not in tag_list:
+        if tag not in tag_list and f"docker.io/library/{tag}" not in tag_list:
             raise CriticalException(
                 f'Cannot find image "{tag}". Make sure you have built the required docker images using "challtools build" before attempting to start them.'
             )
@@ -645,7 +645,7 @@ def start_chall(config):
             detach=True,
             environment={"TEST": "true"},
             privileged=container_config["privileged"],
-            name=container_name
+            name=container_name,
             # TODO volumes
         )
 
@@ -759,18 +759,16 @@ def generate_compose(configs, is_global=False, restart_policy="no", start_port=5
         # use unique container names for single container deployments
         is_single_container = len(config["deployment"]["containers"].keys()) == 1
         if is_single_container:
-            container_name = next(
-                iter(config["deployment"]["containers"])
-            )
+            container_name = next(iter(config["deployment"]["containers"]))
             unique_container_name = create_docker_name(
                 config["title"],
                 container_name=container_name,
                 chall_id=config["challenge_id"],
             )
-            config["deployment"]["containers"][
-                unique_container_name
-            ] = config["deployment"]["containers"].pop(container_name)
-        
+            config["deployment"]["containers"][unique_container_name] = config[
+                "deployment"
+            ]["containers"].pop(container_name)
+
         # TODO handle services with set external ports first so the auto assigned ports dont potentially conflict with them
         for name, container in config["deployment"]["containers"].items():
             compose_service = {"ports": [], "restart": restart_policy}
