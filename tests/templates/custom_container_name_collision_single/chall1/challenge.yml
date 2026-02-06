@@ -1,0 +1,24 @@
+title: Challtools test 1
+description: Default description
+authors:
+  - Default Author
+categories:
+  - Default Category
+
+flag_format_prefix: CTF{
+flags: d3f4ul7_fl46
+
+deployment:
+  type: docker
+  containers:
+    custom-container-name-1:
+      image: container
+      services:
+        - type: website
+          internal_port: 1337
+          external_port: 1337
+      privileged: true
+  networks: {}
+  volumes: {}
+
+spec: 0.0.1

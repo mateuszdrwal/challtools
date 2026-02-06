@@ -5,7 +5,7 @@ import pytest
 import yaml
 from utils import inittemplatepath, main_wrapper, populate_dir
 
-from challtools.utils import build_chall, get_valid_config
+from challtools.utils import build_chall, get_valid_config, create_docker_name
 
 
 class Test_allchalls:
@@ -130,13 +130,90 @@ class Test_compose:
         compose = yaml.safe_load(Path("compose.yml").read_text())
         assert len(compose) == 1
         assert compose.get("services") == {
-            "challenge": {
+            create_docker_name(
+                "Challtools test", container_name="challenge", chall_id=None
+            ): {
                 "build": "container",
                 "ports": ["50000:1337"],
                 "privileged": True,
                 "restart": "always",
             }
         }
+
+    def test_custom_container_name_single(self, tmp_path):
+        populate_dir(tmp_path, "custom_container_name_single")
+        assert main_wrapper(["compose", "--restart-policy", "always"]) == 0
+        assert Path("compose.yml").exists()
+        compose = yaml.safe_load(Path("compose.yml").read_text())
+        assert len(compose) == 1
+        assert compose.get("services") == {
+            create_docker_name(
+                "Challtools test", container_name="custom-container-name", chall_id=None
+            ): {
+                "build": "container",
+                "ports": ["50000:1337"],
+                "privileged": True,
+                "restart": "always",
+            }
+        }
+
+    def test_custom_container_name_multiple(self, tmp_path):
+        populate_dir(tmp_path, "custom_container_name_multiple")
+        assert main_wrapper(["compose", "--restart-policy", "always"]) == 0
+        assert Path("compose.yml").exists()
+        compose = yaml.safe_load(Path("compose.yml").read_text())
+        assert len(compose) == 1
+        assert compose.get("services") == {
+            "custom-container-name-1": {
+                "build": "container",
+                "ports": ["50000:1337"],
+                "privileged": True,
+                "restart": "always",
+            },
+            "custom-container-name-2": {
+                "build": "container",
+                "ports": ["50001:7331"],
+                "restart": "always",
+            },
+        }
+
+    def test_custom_container_name_collision_single(self, tmp_path, capsys):
+        populate_dir(tmp_path, "custom_container_name_collision_single")
+        assert main_wrapper(["compose", "--all", "--restart-policy", "always"]) == 0
+        assert Path("compose.yml").exists()
+        compose = yaml.safe_load(Path("compose.yml").read_text())
+        assert len(compose) == 1
+        assert compose.get("services") == {
+            create_docker_name(
+                "Challtools test 1",
+                container_name="custom-container-name-1",
+                chall_id=None,
+            ): {
+                "build": f"chall1{os.sep}container",
+                "ports": ["1337:1337"],
+                "privileged": True,
+                "restart": "always",
+            },
+            create_docker_name(
+                "Challtools test 2",
+                container_name="custom-container-name-1",
+                chall_id=None,
+            ): {
+                "build": f"chall2{os.sep}container",
+                "ports": ["1338:1338"],
+                "privileged": True,
+                "restart": "always",
+            },
+        }
+
+    def test_custom_container_name_collision_multiple(self, tmp_path, capsys):
+        populate_dir(tmp_path, "custom_container_name_collision_multiple")
+        assert main_wrapper(["compose", "--all", "--restart-policy", "always"]) == 1
+        assert Path("compose.yml").exists() == False
+        assert (
+            'More than one multi-container challenge'
+            in capsys.readouterr().out
+        )
 
 
 class Test_ensureid:

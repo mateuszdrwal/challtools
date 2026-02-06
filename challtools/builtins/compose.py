@@ -22,5 +22,5 @@ def run(args):
 
     Path("compose.yml").write_text(yaml.dump(compose))
 
-    print(f"{SUCCESS}docker-compose.yml written!{CLEAR}")
+    print(f"{SUCCESS}compose.yml written!{CLEAR}")
     return 0

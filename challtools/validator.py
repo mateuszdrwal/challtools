@@ -146,12 +146,13 @@ class ConfigValidator:
                 predefined_service["port"] = str(predefined_service["port"])
         # convert service into deployment
         if self.normalized_config["service"]:
+            container_name = "challenge"  # TODO change the name of this container to "default" in the spec and here
             self.normalized_config["deployment"] = cast(
                 JsonDict,
                 {
                     "type": "docker",
                     "containers": {
-                        "challenge": {  # TODO change the name of this container to "default" in the spec and here
+                        container_name: {
                             "image": self.normalized_config["service"]["image"],
                             "services": [
                                 {
@@ -172,7 +173,7 @@ class ConfigValidator:
                 },
             )
             if self.normalized_config["service"].get("external_port"):
-                self.normalized_config["deployment"]["containers"]["challenge"][
+                self.normalized_config["deployment"]["containers"][container_name][
                     "services"
                 ][0]["external_port"] = self.normalized_config["service"][
                     "external_port"

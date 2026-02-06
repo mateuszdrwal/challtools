@@ -182,6 +182,7 @@ def get_valid_config(workdir=None, search=True, cd=True):
     Raises:
         CriticalException: If there are critical validation errors
     """
+
     config = load_config(
         search=search, cd=cd, **{"workdir": workdir} if workdir else {}
     )
@@ -585,7 +586,7 @@ def start_chall(config):
             chall_id=config["challenge_id"],
         )  # TODO check that the container hasn't already been started
 
-        if tag not in tag_list and f'docker.io/library/{tag}' not in tag_list:
+        if tag not in tag_list and f"docker.io/library/{tag}" not in tag_list:
             raise CriticalException(
                 f'Cannot find image "{tag}". Make sure you have built the required docker images using "challtools build" before attempting to start them.'
             )
@@ -644,7 +645,7 @@ def start_chall(config):
             detach=True,
             environment={"TEST": "true"},
             privileged=container_config["privileged"],
-            name=container_name
+            name=container_name,
             # TODO volumes
         )
 
@@ -733,6 +734,7 @@ def generate_compose(configs, is_global=False, restart_policy="no", start_port=5
     compose = {"services": {}, "volumes": {}, "networks": {}}
     next_port = start_port
     used_ports = set()
+    unique_containers = {}
 
     for path, config in configs:
         if not config["deployment"]:
@@ -753,6 +755,19 @@ def generate_compose(configs, is_global=False, restart_policy="no", start_port=5
                 **compose["networks"],
                 **{network: {} for network in config["deployment"]["networks"]},
             }
+
+        # use unique container names for single container deployments
+        is_single_container = len(config["deployment"]["containers"].keys()) == 1
+        if is_single_container:
+            container_name = next(iter(config["deployment"]["containers"]))
+            unique_container_name = create_docker_name(
+                config["title"],
+                container_name=container_name,
+                chall_id=config["challenge_id"],
+            )
+            config["deployment"]["containers"][unique_container_name] = config[
+                "deployment"
+            ]["containers"].pop(container_name)
 
         # TODO handle services with set external ports first so the auto assigned ports dont potentially conflict with them
         for name, container in config["deployment"]["containers"].items():
@@ -809,16 +824,16 @@ def generate_compose(configs, is_global=False, restart_policy="no", start_port=5
             if container["privileged"]:
                 compose_service["privileged"] = True
 
-            if is_global:
-                compose["services"][
-                    create_docker_name(
-                        config["title"],
-                        container_name=name,
-                        chall_id=config["challenge_id"],
-                    )
-                ] = compose_service
-            else:
-                compose["services"][name] = compose_service
+            if name in compose["services"]:
+                first_duplicate = config["title"]
+                second_duplicate = unique_containers[name]
+                raise CriticalException(
+                    f'More than one multi-container challenge ("{first_duplicate}" and "{second_duplicate}") is using the container name "{name}". Aborting.'
+                )
+            compose["services"][
+                name
+            ] = compose_service  # TODO add warning/error on container name collision?
+            unique_containers[name] = config["title"]
 
     if not compose["volumes"]:
         del compose["volumes"]
