@@ -12,6 +12,7 @@ import yaml
 
 from challtools.constants import *
 from challtools.exceptions import CriticalException
+from challtools.validator import ConfigValidator
 
 
 def process_messages(messages, verbose=False):
@@ -181,7 +182,6 @@ def get_valid_config(workdir=None, search=True, cd=True):
     Raises:
         CriticalException: If there are critical validation errors
     """
-    from challtools.validator import ConfigValidator
 
     config = load_config(
         search=search, cd=cd, **{"workdir": workdir} if workdir else {}
@@ -746,6 +746,21 @@ def generate_compose(configs, is_global=False, restart_policy="no", start_port=5
                 **{network: {} for network in config["deployment"]["networks"]},
             }
 
+        # use unique container names for single container deployments
+        is_single_container = len(config["deployment"]["containers"].keys()) == 1
+        if is_single_container:
+            container_name = next(
+                iter(config["deployment"]["containers"])
+            )
+            unique_container_name = create_docker_name(
+                config["title"],
+                container_name=container_name,
+                chall_id=config["challenge_id"],
+            )
+            config["deployment"]["containers"][
+                unique_container_name
+            ] = config["deployment"]["containers"].pop(container_name)
+        
         # TODO handle services with set external ports first so the auto assigned ports dont potentially conflict with them
         for name, container in config["deployment"]["containers"].items():
             compose_service = {"ports": [], "restart": restart_policy}
