@@ -483,7 +483,11 @@ def build_docker_images(config, client):
         print(f"{BOLD}Processing container {container_name}...{CLEAR}")
         build_image(
             container["image"],
-            container_name,
+            create_docker_name(
+                config["title"],
+                container_name=container_name,
+                chall_id=config["challenge_id"],
+            ),
             client,
         )
 
@@ -576,11 +580,13 @@ def start_chall(config):
     ]
 
     for container_name, container in config["deployment"]["containers"].items():
-        tag = (
-            container_name  # TODO check that the container hasn't already been started
-        )
+        tag = create_docker_name(
+            config["title"],
+            container_name=container_name,
+            chall_id=config["challenge_id"],
+        )  # TODO check that the container hasn't already been started
 
-        if tag not in tag_list and f"docker.io/library/{tag}" not in tag_list:
+        if tag not in tag_list and f'docker.io/library/{tag}' not in tag_list:
             raise CriticalException(
                 f'Cannot find image "{tag}". Make sure you have built the required docker images using "challtools build" before attempting to start them.'
             )
@@ -607,7 +613,11 @@ def start_chall(config):
     )
 
     for container_name, container_config in config["deployment"]["containers"].items():
-        tag = container_name
+        tag = create_docker_name(
+            config["title"],
+            container_name=container_name,
+            chall_id=config["challenge_id"],
+        )
 
         ports = {}
         for service in container_config.get("services", []):
@@ -635,7 +645,7 @@ def start_chall(config):
             detach=True,
             environment={"TEST": "true"},
             privileged=container_config["privileged"],
-            name=container_name,
+            name=container_name
             # TODO volumes
         )
 
